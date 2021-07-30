@@ -29,19 +29,62 @@ var baseMaps = {
     "Satellite": realTerrain
 };
 
-/** Crezione della mappa */
 var mymap = L.map('mapid', {
-    center: [42, 12],
-    zoom: 6,
+    center: [44.49712, 11.34248],
+    zoom: 15,
     layers: [realTerrain],
     fullscreenControl: true,
     fullscreenControlOptions: {
         position: 'topleft'
-    }
-});
+    },
+    drawControl: true });
 
-//Aggiunta del livello di scala sulla mappa (in basso a sx, sistema metrico ed imperiale)
 L.control.scale().addTo(mymap);
 
-L.control.layers(baseMaps).addTo(mymap);
+$.getScript("./get_rastrelliere.js")
+    .done(function (script, textStatus) {
+        console.log("Caricamento rastrelliere completato");
+    })
+    .fail(function (jqxhr, settings, exception) {
+        console.log("Errore nel caricamento delle rastrelliere");
+    });
 
+$.getScript("./get_geofences.js")
+    .done(function (script, textStatus) {
+        console.log("Caricamento geofences completato");
+    })
+    .fail(function (jqxhr, settings, exception) {
+        console.log("Errore nel caricamento delle geofences");
+    });
+
+
+$.getScript("./get_geofences_vietate.js")
+    .done(function (script, textStatus) {
+        console.log("Caricamento geofences vietate completato");
+    })
+    .fail(function (jqxhr, settings, exception) {
+        console.log("Errore nel caricamento delle geofences vietate");
+    });
+
+$.getScript("./draw.js")
+    .done(function (script, textStatus) {
+        console.log("Caricamento disegno completato");
+    })
+    .fail(function (jqxhr, settings, exception) {
+        console.log("Errore nel caricamento disegno");
+    });
+
+
+/*//Bottone per chiudere il video
+var MyCloseControl = L.Control.extend({
+    onAdd: function () {
+        var button = L.DomUtil.create('button', 'Aggiungi geofence');
+        button.innerHTML = 'Ciao boomer';
+        L.DomEvent.on(button, 'click', function () {
+            open("https://www.mauro.barbieri.it", {app: 'chrome'});
+            button.remove();
+        });
+        return button;
+    }
+});
+var closeControl = (new MyCloseControl()).addTo(mymap);*/
