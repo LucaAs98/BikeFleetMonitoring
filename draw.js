@@ -54,14 +54,23 @@ mymap.on(L.Draw.Event.CREATED, function (e) {
     var type = e.layerType,
         layer = e.layer;
 
-
-    if (type == "circle") {
+    console.log(type);
+    if (type === 'circle') {
         /*** Rimuovere la possibilità di fare cerchi */
-    } else if (type == "marker") {
+    } else if (type === 'marker') {
         var rastrelliera = L.circle(e.layer.getLatLng());
         console.log(rastrelliera.toGeoJSON());
+        layer.bindPopup('<h3>Per continuare inserisci il nome della rastrelliera: </h3>' +
+            ' <form action="/????">\n' +
+            '  <label for="lname">Nome:</label><br>\n' +
+            '  <input type="text" id="lname" name="lname" placeholder="Inserisci qui il nome..."><br><br>\n' +
+            '  <input type="submit" value="Crea rastrelliera">\n' +
+            '</form> \n');
 
-        /** Aggiungi il punto al db
+        layer.on("add", function (event) {
+            event.target.openPopup();
+        });
+        /** Aggiungi il punto al db se ha inserito tutti i dati corretti
          *
          *
          *
@@ -70,15 +79,23 @@ mymap.on(L.Draw.Event.CREATED, function (e) {
         var polygon = L.polygon(e.layer.getLatLngs());
         console.log(polygon.toGeoJSON());
 
+        layer.bindPopup('<h3>Per continuare inserisci il nome della geofence: </h3>' +
+            ' <form action="/????">\n' +
+            '  <label for="lname">Nome:</label><br>\n' +
+            '  <input type="text" id="lname" name="lname" placeholder="Inserisci qui il nome..."><br><br>\n' +
+            '  <input type="submit" value="Crea geofence">\n' +
+            '</form> \n');
+
+        layer.on("add", function (event) {
+            event.target.openPopup();
+        });
         /** Aggiungi il poligono al db
          *
          *
          *
          * */
-    }
 
-    if (type === 'marker') {
-        layer.bindPopup('A popup!');
+
     }
 
     editableLayers.addLayer(layer);
