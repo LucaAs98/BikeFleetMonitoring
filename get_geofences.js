@@ -22,7 +22,6 @@ function addGeofences(data) {
             geometry: geometry,
         };
 
-
         jsonFeatures.push(feature);
     });
 

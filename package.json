@@ -9,7 +9,10 @@
     "open": "^8.2.1",
     "pg": "^8.7.1"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "ejs": "^3.1.6",
+    "request": "^2.88.2"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },

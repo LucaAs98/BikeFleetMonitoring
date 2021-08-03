@@ -1,27 +1,15 @@
 var editableLayers = new L.FeatureGroup();
 mymap.addLayer(editableLayers);
 
+L.drawLocal.draw.toolbar.buttons.polygon = 'Disegna la geofence';
+L.drawLocal.draw.toolbar.buttons.marker = 'Aggiungi la rastrelliera';
 
-var MyCustomMarker = L.Icon.extend({
-    options: {
-        shadowUrl: null,
-        iconAnchor: new L.Point(12, 12),
-        iconSize: new L.Point(24, 24),
-        iconUrl: 'link/to/image.png'
-    }
-});
-
-/*var options = {
+var options = {
     position: 'topright',
     draw: {
-        polyline: {
-            shapeOptions: {
-                color: '#f357a1',
-                weight: 10
-            }
-        },
+        polyline: false,
         polygon: {
-            allowIntersection: false, // Restricts shapes to simple polygons
+            allowIntersection: true, // Restricts shapes to simple polygons
             drawError: {
                 color: '#e1e100', // Color the shape will turn when intersects
                 message: '<strong>Oh snap!<strong> you can\'t draw that!' // Message that will show when intersect
@@ -31,72 +19,92 @@ var MyCustomMarker = L.Icon.extend({
             }
         },
         circle: false, // Turns off this drawing tool
-        rectangle: {
-            shapeOptions: {
-                clickable: false
-            }
-        },
-        marker: {
-            icon: new MyCustomMarker()
-        }
+        rectangle: false,
     },
-    edit: {
-        featureGroup: editableLayers, //REQUIRED!!
-        remove: false
-    }
+    edit: false
 };
 
 var drawControl = new L.Control.Draw(options);
-mymap.addControl(drawControl);*/
+mymap.addControl(drawControl);
 
 mymap.on(L.Draw.Event.CREATED, function (e) {
+    var type = e.layerType;
+    layer = e.layer;
 
-    var type = e.layerType,
-        layer = e.layer;
-
-    console.log(type);
-    if (type === 'circle') {
-        /*** Rimuovere la possibilità di fare cerchi */
-    } else if (type === 'marker') {
-        var rastrelliera = L.circle(e.layer.getLatLng());
-        console.log(rastrelliera.toGeoJSON());
+    if (type === 'marker') {
         layer.bindPopup('<h3>Per continuare inserisci il nome della rastrelliera: </h3>' +
-            ' <form action="/????">\n' +
-            '  <label for="lname">Nome:</label><br>\n' +
-            '  <input type="text" id="lname" name="lname" placeholder="Inserisci qui il nome..."><br><br>\n' +
-            '  <input type="submit" value="Crea rastrelliera">\n' +
+            '<form  id="formRastrelliera" action="/home" method="POST">\n' +
+            '   <label for="lname">Nome:</label><br>\n' +
+            '   <input type="text" id="name" name="name" placeholder="Inserisci qui il nome..." required><br><br>\n' +
+            '   <input type="hidden" id="long" name="long" value=' + layer.getLatLng().lng + '>' +
+            '   <input type="hidden" id="lat" name="lat" value=' + layer.getLatLng().lat + '>' +
+            '   <input type="submit" value="Crea rastrelliera">\n' +
             '</form> \n');
 
         layer.on("add", function (event) {
             event.target.openPopup();
         });
-        /** Aggiungi il punto al db se ha inserito tutti i dati corretti
-         *
-         *
-         *
-         * */
+
+        layer.on("popupclose", function (event) {
+            mymap.removeLayer(layer);
+        });
     } else {
-        var polygon = L.polygon(e.layer.getLatLngs());
-        console.log(polygon.toGeoJSON());
+        var coordinate = getCoordinateFromArray(layer.getLatLngs()[0]).toString();
+        var myGeoJSON = {
+            type: "Polygon",
+            coordinates: JSON.parse("[" + coordinate + "]"),
+        }
 
         layer.bindPopup('<h3>Per continuare inserisci il nome della geofence: </h3>' +
-            ' <form action="/????">\n' +
-            '  <label for="lname">Nome:</label><br>\n' +
-            '  <input type="text" id="lname" name="lname" placeholder="Inserisci qui il nome..."><br><br>\n' +
-            '  <input type="submit" value="Crea geofence">\n' +
-            '</form> \n');
+            '<form id="formGeofences" action="/home" method="POST">\n' +
+            '   <label for="name">Nome:</label><br>\n' +
+            '   <input type="text" id="name" name="name" placeholder="Inserisci qui il nome..."><br><br>\n' +
+            '   <input type="hidden" id="geom" name="geom" value=' + JSON.stringify(myGeoJSON) + '>' +
+            '   <label for="geoVietata">Vietata:</label>' +
+            '   <input type="hidden" id="geofence" name="geofence" value="true">' +
+            '   <input type="checkbox" id="geoVietata" name="geoVietata"><br><br>\n' +
+            '   <input type="submit" value="Crea geofence">\n' +
+            '</form>\n');
 
         layer.on("add", function (event) {
             event.target.openPopup();
         });
-        /** Aggiungi il poligono al db
-         *
-         *
-         *
-         * */
 
-
+        layer.on("popupclose", function (event) {
+            mymap.removeLayer(layer);
+        });
     }
-
     editableLayers.addLayer(layer);
 });
+
+function getCoordinateFromArray(arrayLatLng) {
+    var StrCoordinate = "["
+    for (cella of arrayLatLng) {
+        StrCoordinate += "["
+        StrCoordinate += cella.lng;
+        StrCoordinate += "," + cella.lat;
+        StrCoordinate += "],"
+    }
+    StrCoordinate = StrCoordinate.slice(0, -1) //Rimuovo l'ultima virgola
+    StrCoordinate += "]";
+
+    return StrCoordinate;
+}
+
+
+/*function inviaDati(layer) {
+
+    fetch('/rastrelliere', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            rastrelliera: {
+                lat: layer.getLatLng().lat,
+                lng: layer.getLatLng().lng,
+                nome:
+            }
+        })
+    });
+}*/

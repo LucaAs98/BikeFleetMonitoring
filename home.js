@@ -37,9 +37,10 @@ var mymap = L.map('mapid', {
     fullscreenControlOptions: {
         position: 'topleft'
     },
-    drawControl: true });
+});
 
 L.control.scale().addTo(mymap);
+L.control.layers(baseMaps).addTo(mymap);
 
 $.getScript("./get_rastrelliere.js")
     .done(function (script, textStatus) {

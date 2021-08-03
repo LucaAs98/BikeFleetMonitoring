@@ -53,10 +53,4 @@ function addMarkers(data) {
     }
 
     L.layerGroup([markers]).addTo(mymap);
-
-    /*var overlayMaps = {
-        "Rastrelliere": rastrelliere,
-    }*/
-
-    L.control.layers(baseMaps).addTo(mymap);
 }
