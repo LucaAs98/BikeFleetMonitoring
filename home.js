@@ -42,6 +42,7 @@ var mymap = L.map('mapid', {
 L.control.scale().addTo(mymap);
 L.control.layers(baseMaps).addTo(mymap);
 
+
 $.getScript("./get_rastrelliere.js")
     .done(function (script, textStatus) {
         console.log("Caricamento rastrelliere completato");
@@ -76,16 +77,40 @@ $.getScript("./draw.js")
     });
 
 
-/*//Bottone per chiudere il video
-var MyCloseControl = L.Control.extend({
+//Bottone per aggiungere geofence da file
+var btnAddGeofenceFromFile = L.Control.extend({
     onAdd: function () {
         var button = L.DomUtil.create('button', 'Aggiungi geofence');
-        button.innerHTML = 'Ciao boomer';
+        button.innerHTML = 'Aggiungi geofence da file';
         L.DomEvent.on(button, 'click', function () {
-            open("https://www.mauro.barbieri.it", {app: 'chrome'});
-            button.remove();
+            var options = {
+                size: [400, 150],
+                minSize: [100, 100],
+                maxSize: [350, 350],
+                anchor: [100, 700],
+                position: "topleft",
+                initOpen: true
+            }
+            var dialog = L.control.dialog(options)
+                .setContent(
+                    '<form enctype="multipart/form-data"  id="formFile" action="/home" method="POST">' +
+                    '<input type="file" name="file" id="file" required>' +
+                    '<button onclick="doupload()" name="submit">Upload File</button>' +
+                    '</form>\n'
+                )
+                .addTo(mymap);
+            dialog.open();
         });
         return button;
     }
 });
-var closeControl = (new MyCloseControl()).addTo(mymap);*/
+var closeControl = (new btnAddGeofenceFromFile()).addTo(mymap);
+
+function doupload() {
+    let entry = document.getElementById("file").files[0];
+    console.log('doupload', entry)
+    if (entry === undefined) {
+        alert('Non hai selezionato nessun file da caricare!');
+    }
+
+}

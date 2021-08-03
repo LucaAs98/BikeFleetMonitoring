@@ -32,7 +32,8 @@ mymap.on(L.Draw.Event.CREATED, function (e) {
     layer = e.layer;
 
     if (type === 'marker') {
-        layer.bindPopup('<h3>Per continuare inserisci il nome della rastrelliera: </h3>' +
+        layer.bindPopup(
+            '<h3>Per continuare inserisci il nome della rastrelliera: </h3>' +
             '<form  id="formRastrelliera" action="/home" method="POST">\n' +
             '   <label for="lname">Nome:</label><br>\n' +
             '   <input type="text" id="name" name="name" placeholder="Inserisci qui il nome..." required><br><br>\n' +

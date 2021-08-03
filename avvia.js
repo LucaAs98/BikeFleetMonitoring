@@ -13,11 +13,16 @@ const client = new Client({
 client.connect();
 
 const express = require("express");
-var bodyParser = require('body-parser')
+var bodyParser = require('body-parser');
+const fileUpload = require('express-fileupload');
 const app = express();
 
 app.use(express.static(__dirname));
 app.use(bodyParser.urlencoded())
+
+app.use(fileUpload({
+    createParentPath: true
+}));
 
 
 app.set('views', __dirname + '/');
@@ -41,43 +46,65 @@ app.get("/home", (req, res) => {
 
 app.post("/home", (req, res) => {
     var apice = "\'";
-    var query_insert;
+    var query_insert = "";
 
-    if (req.body.geofence === undefined) {
-        query_insert = 'INSERT INTO rastrelliere(NAME, GEOM) VALUES (' + apice + req.body.name + apice + ', ST_GeomFromText(' + apice + 'POINT(' + req.body.long + ' ' + req.body.lat + ')' + apice + '));'
+    if (req.files.file.data.toString() === undefined) {
+        if (req.body.geofence === undefined) {
+            query_insert = 'INSERT INTO rastrelliere(NAME, GEOM) VALUES (' + apice + req.body.name + apice + ', ST_GeomFromText(' + apice + 'POINT(' + req.body.long + ' ' + req.body.lat + ')' + apice + '));'
+            client.query(query_insert, (err, result) => {
+                if (err) {
+                    console.log('Errore non sono riuscito ad aggiungere la rastrelliera!');
+                } else {
+                    console.log('Rastrelliera aggiunta!');
+                    getRastrelliere();
+                    res.redirect('/home');
+                }
+            });
+        } else {
+            if (req.body.geoVietata === undefined) {
+                query_insert = 'INSERT INTO poi_geofence(NAME, GEOM) VALUES (' + apice + req.body.name + apice + ', ST_GeomFromGeoJSON(' + apice + req.body.geom + apice + '));'
+                client.query(query_insert, (err, result) => {
+                    if (err) {
+                        console.log('Errore non sono riuscito ad aggiungere la geofence!' + query_insert);
+                    } else {
+                        console.log('Geofence aggiunta!');
+                        getGeofences();
+                        res.redirect('/home');
+                    }
+                });
+            } else {
+                query_insert = 'INSERT INTO areevietate_geofence(NAME, GEOM) VALUES (' + apice + req.body.name + apice + ', ST_GeomFromGeoJSON(' + apice + req.body.geom + apice + '));'
+                client.query(query_insert, (err, result) => {
+                    if (err) {
+                        console.log('Errore non sono riuscito ad aggiungere la geofence vietata!' + query_insert);
+                    } else {
+                        console.log('Geofence vietata aggiunta!');
+                        getGeofencesVietate();
+                        res.redirect('/home');
+                    }
+                });
+            }
+        }
+
+    } else {
+        rastrelliere = JSON.parse(req.files.file.data.toString());
+        for (ras of rastrelliere.features) {
+            var name = ras.properties.Nome;
+            name = name.replace("'", " ")
+            var long = ras.geometry.coordinates[0];
+            var lat = ras.geometry.coordinates[1];
+            query_insert += 'INSERT INTO rastrelliere(NAME, GEOM) VALUES (' + apice + name + apice + ', ST_GeomFromText(' + apice + 'POINT(' + long + ' ' + lat + ')' + apice + '));';
+        }
+
         client.query(query_insert, (err, result) => {
             if (err) {
-                console.log('Errore non sono riuscito ad aggiungere la rastrelliera!');
+                console.log('Errore non sono riuscito ad aggiungere la rastrelliera!' + err);
             } else {
                 console.log('Rastrelliera aggiunta!');
                 getRastrelliere();
                 res.redirect('/home');
             }
         });
-    } else {
-        if (req.body.geoVietata === undefined) {
-            query_insert = 'INSERT INTO poi_geofence(NAME, GEOM) VALUES (' + apice + req.body.name + apice + ', ST_GeomFromGeoJSON(' + apice + req.body.geom + apice + '));'
-            client.query(query_insert, (err, result) => {
-                if (err) {
-                    console.log('Errore non sono riuscito ad aggiungere la geofence!' + query_insert);
-                } else {
-                    console.log('Geofence aggiunta!');
-                    getGeofences();
-                    res.redirect('/home');
-                }
-            });
-        } else {
-            query_insert = 'INSERT INTO areevietate_geofence(NAME, GEOM) VALUES (' + apice + req.body.name + apice + ', ST_GeomFromGeoJSON(' + apice + req.body.geom + apice + '));'
-            client.query(query_insert, (err, result) => {
-                if (err) {
-                    console.log('Errore non sono riuscito ad aggiungere la geofence vietata!' + query_insert);
-                } else {
-                    console.log('Geofence vietata aggiunta!');
-                    getGeofencesVietate();
-                    res.redirect('/home');
-                }
-            });
-        }
     }
 });
 
