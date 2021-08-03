@@ -132,3 +132,15 @@ function getGeofencesVietate() {
         }
     });
 }
+
+app.get("/users", (req, res) => {
+    client.query('SELECT * FROM utente;', (err, result) => {
+        if (err) {
+            console.log('Errore, non sono riuscito a caricare le rastrelliere');
+        } else {
+            users = result.rows;
+            console.log(users);
+            res.json(users);
+        }
+    });
+});
