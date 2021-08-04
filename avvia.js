@@ -131,7 +131,7 @@ open("http://localhost:3000/home", {app: 'chrome'});
 
 
 function getRastrelliere() {
-    client.query('SELECT name, ST_X(geom) AS long, ST_Y(geom) AS lat FROM public.rastrelliere;', (err, res) => {
+    client.query('SELECT id, name, ST_X(geom) AS long, ST_Y(geom) AS lat FROM public.rastrelliere;', (err, res) => {
         if (err) {
             console.log('Errore, non sono riuscito a caricare le rastrelliere');
         } else {
@@ -166,8 +166,21 @@ app.get("/users", (req, res) => {
             console.log('Errore, non sono riuscito a caricare le rastrelliere');
         } else {
             users = result.rows;
-            console.log(users);
+
             res.json(users);
         }
     });
+});
+
+app.get("/listabici", (req, res) => {
+    client.query('SELECT bicicletta as id FROM public.lista_bici_rastrelliera where rastrelliera = '+req.query.id+';', (err, result) => {
+        if (err) {
+            console.log('Errore!');
+        } else {
+            bici = result.rows;
+            res.json(bici);
+        }
+    });
+
+    //res.json(rastrelliere);
 });
