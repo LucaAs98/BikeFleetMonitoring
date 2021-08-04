@@ -77,8 +77,8 @@ $.getScript("./draw.js")
     });
 
 
-//Bottone per aggiungere geofence da file
-var btnAddGeofenceFromFile = L.Control.extend({
+//Bottone per aggiungere rastrelliere da file
+var btnAddRastrelliereFromFile = L.Control.extend({
     onAdd: function () {
         var button = L.DomUtil.create('button', 'Aggiungi geofence');
         button.innerHTML = 'Aggiungi geofence da file';
@@ -97,14 +97,16 @@ var btnAddGeofenceFromFile = L.Control.extend({
                     '<input type="file" name="file" id="file" required>' +
                     '<button onclick="doupload()" name="submit">Upload File</button>' +
                     '</form>\n'
-                )
-                .addTo(mymap);
+                ).addTo(mymap);
+            dialog.hideResize();
+            dialog.freeze();
             dialog.open();
         });
         return button;
     }
 });
-var closeControl = (new btnAddGeofenceFromFile()).addTo(mymap);
+
+var addRastrelliere = (new btnAddRastrelliereFromFile()).addTo(mymap);
 
 function doupload() {
     let entry = document.getElementById("file").files[0];
@@ -112,5 +114,36 @@ function doupload() {
     if (entry === undefined) {
         alert('Non hai selezionato nessun file da caricare!');
     }
-
 }
+
+
+//Bottone per vedere gli utenti in real time
+var btnViewBikesRealTime = L.Control.extend({
+    onAdd: function () {
+        var button = L.DomUtil.create('button', 'Bici real time');
+        button.innerHTML = 'Visualizza bici in real time';
+        L.DomEvent.on(button, 'click', function () {
+            alert("Visualizza bici in real time!")
+        });
+
+        return button;
+    }
+});
+
+var viewBikes = (new btnViewBikesRealTime()).addTo(mymap);
+
+
+//Bottone per vedere lo storico dei tragitti
+var btnViewStorico = L.Control.extend({
+    onAdd: function () {
+        var button = L.DomUtil.create('button', 'Storico');
+        button.innerHTML = 'Visualizza storico tragitti';
+        L.DomEvent.on(button, 'click', function () {
+            alert("Visualizza storico tragitti!")
+        });
+
+        return button;
+    }
+});
+
+var viewStorico = (new btnViewStorico()).addTo(mymap);

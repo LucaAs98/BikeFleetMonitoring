@@ -1,3 +1,8 @@
+/*html *
+{
+    color: #000 !important;
+    font-family: "Titillium Web", serif !important;
+}*/
 body {
     padding: 0;
     margin: 0;
@@ -62,4 +67,8 @@ html, body, #mapid {
     float: left;
     margin-right: 8px;
     opacity: 0.7;
+}
+
+.leaflet-control-dialog-close {
+    color: red;
 }

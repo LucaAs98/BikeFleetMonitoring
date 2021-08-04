@@ -8,7 +8,6 @@ async function getGeofences() {
 }
 
 function addGeofences(data) {
-
     var jsonFeatures = [];
 
     data.forEach(function (geof) {
