@@ -1,4 +1,5 @@
 var rastrelliere, geofence, geofenceVietate, users;
+var apice = "\'";
 
 const {Client} = require('pg')
 
@@ -45,7 +46,7 @@ app.get("/home", (req, res) => {
 });
 
 app.post("/home", (req, res) => {
-    var apice = "\'";
+
     var query_insert = "";
 
     if (req.files === undefined) {
@@ -189,6 +190,7 @@ app.post("/prenota", (req, res) => {
 
             if (err) {
                 console.log('Errore!');
+
             } else {
                 console.log('Prenotazione effettuata!');
 
