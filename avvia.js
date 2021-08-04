@@ -181,5 +181,20 @@ app.get("/listabici", (req, res) => {
         }
     });
 
-    //res.json(rastrelliere);
 });
+
+app.post("/prenota", (req, res) => {
+    client.query('insert into noleggio(codice,bicicletta,utente,data_inizio,data_fine) values('+  apice + req.body.cod + apice +','+ req.body.bici + ',' + apice + req.body.utente + apice +',' + apice +req.body.di + apice +','+ apice + req.body.df + apice +')'
+        , (err, result) => {
+
+            if (err) {
+                console.log('Errore!');
+            } else {
+                console.log('Prenotazione effettuata!');
+
+            }
+
+    });
+
+});
+
