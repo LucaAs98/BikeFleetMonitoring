@@ -35,25 +35,6 @@ app.set('views', __dirname + '/');
 app.engine('html', require('ejs').renderFile);
 app.set('view engine', 'ejs');
 
-var set_ip_address = require('set-ip-address')
-
-var eth0 = {
-    interface: 'eth0',
-    ip_address: '10.0.0.1',
-    prefix: 20,
-    gateway: '10.0.0.1',
-    nameservers: ['8.8.8.8'],
-    optional: true // (netplan) - dont wait for interfaces to avoid boot delay
-}
-
-var eth1 = {
-    interface: 'eth1',
-    dhcp: true
-}
-
-set_ip_address.configure([eth0, eth1]).then(() => console.log('done writing config files'));
-
-
 /* Stiamo in ascolto su "localhost:3000". */
 app.listen(3000, () => {
     console.log("Application started and Listening on port 3000");
@@ -111,12 +92,23 @@ app.get("/users", async (req, res) => {
     }
 });
 
-/* Ad URL "/listabici" avremo il JSON di tutte le bici riferite ad una determinata rastrelliera.*/
+/* Ad URL "/listabici" avremo il JSON di tutte le bici riferite ad una determinata rastrelliera. */
 app.get("/listabici", async (req, res) => {
     var response = await getListaBici(req.query.id).catch((err) => errore_completo = err);
 
     if (!response) {
         console.log('Errore, non sono riuscito a caricare la lista delle bici.' + '\n' + errore_completo);
+    } else {
+        res.json(response.rows);
+    }
+});
+
+/* Ad URL "/vis_pren" avremo il JSON del codice di prenotazione.*/
+app.get("/vis_pren", async (req, res) => {
+    var response = await getPrenotazione(apice + req.query.cod_u + apice).catch((err) => errore_completo = err);
+
+    if (!response) {
+        console.log('Errore, non sono riuscito a caricare il codice della prenotazione.' + '\n' + errore_completo);
     } else {
         res.json(response.rows);
     }
@@ -136,7 +128,7 @@ app.post("/prenota", (req, res) => {
 
 /* Facendo una richiesta "POST" ad URL "/rastrelliere_marker" si aggiunge tramite disegno una rastrelliera. */
 app.post("/rastrelliere_marker", (req, res) => {
-    query_insert = 'INSERT INTO rastrelliere(name, geom) VALUES (' + apice + req.body.name + apice + ', ST_GeomFromText(' + apice + 'POINT(' + req.body.long + ' ' + req.body.lat + ')' + apice + '));'
+    query_insert = 'INSERT INTO rastrelliere(name, geom) VALUES (' + apice + req.body.name + apice + ', ST_GeomFromText(' + apice + 'POINT(' + req.body.long + ' ' + req.body.lat + ')' + apice + ')) ON CONFLICT ON CONSTRAINT name DO NOTHING;'
     client.query(query_insert, async (err, result) => {
         if (err) {
             console.log('Errore non sono riuscito ad aggiungere la rastrelliera!');
@@ -163,7 +155,7 @@ app.post("/rastrelliere_file", (req, res) => {
         name = name.replace("'", " ")
         var long = ras.geometry.coordinates[0];
         var lat = ras.geometry.coordinates[1];
-        query_insert += 'INSERT INTO rastrelliere(name, geom) VALUES (' + apice + name + apice + ', ST_GeomFromText(' + apice + 'POINT(' + long + ' ' + lat + ')' + apice + '));';
+        query_insert += 'INSERT INTO rastrelliere(name, geom) VALUES (' + apice + name + apice + ', ST_GeomFromText(' + apice + 'POINT(' + long + ' ' + lat + ')' + apice + ')) ON CONFLICT ON CONSTRAINT name DO NOTHING;';
     }
 
     client.query(query_insert, async (err, result) => {
@@ -223,6 +215,28 @@ app.post("/geofence", (req, res) => {
     }
 });
 
+/* Facendo una richiesta "POST" ad URL "/geofence" si aggiunge tramite disegno una geofence. All'interno si distingue se
+*  è una geofence vietata oppure no. */
+app.post("/prova_posizione", (req, res) => {
+    console.log(req.body.long + "-------------" + req.body.lat);
+    console.log(req.query);
+    query_insert = 'INSERT INTO prova_posizione_utente(geom) VALUES (ST_GeomFromText(' + apice + 'POINT(' + req.body.long + ' ' + req.body.lat + ')' + apice + '));'
+    client.query(query_insert, async (err, result) => {
+        if (err) {
+            console.log('Errore non sono riuscito ad aggiungere la posizione!' + err);
+        } else {
+            /* Riprendo le rastrelliere e se non ci sono stati errori rivado alla home. */
+            var response = await getRastrelliere().catch((err) => errore_completo = err);
+
+            if (!response) {
+                console.log('Errore, non sono riuscito a caricare le posizione.' + '\n' + errore_completo);
+            } else {
+                console.log('Posizione aggiunta!');
+            }
+        }
+    });
+});
+
 /* Metodi per prendere dal DB ciò che ci serve. Ritorna poi alla get che l'ha chiamata, in modo tale da controllare se
 * ci sono stati errori altrimenti stampa nella pagina le righe della query trasformate in JSON. */
 function getRastrelliere() {
@@ -245,6 +259,9 @@ function getListaBici(id) {
     return client.query('SELECT bicicletta AS id FROM public.lista_bici_rastrelliera WHERE rastrelliera = ' + id + ';');
 }
 
+function getPrenotazione(cod_u) {
+    return client.query('SELECT codice FROM noleggio WHERE utente =' + cod_u + '  AND codice NOT IN  (SELECT noleggio FROM storico)');
+}
 
 // All'avvio apriamo la home con il browser di default.
 open("http://localhost:3000/home");
