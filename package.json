@@ -13,7 +13,8 @@
   },
   "devDependencies": {
     "ejs": "^3.1.6",
-    "request": "^2.88.2"
+    "request": "^2.88.2",
+    "set-ip-address": "^1.0.9"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
