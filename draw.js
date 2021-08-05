@@ -34,7 +34,7 @@ mymap.on(L.Draw.Event.CREATED, function (e) {
     if (type === 'marker') {
         layer.bindPopup(
             '<h3>Per continuare inserisci il nome della rastrelliera: </h3>' +
-            '<form  id="formRastrelliera" action="/home" method="POST">\n' +
+            '<form  id="formRastrelliera" action="/rastrelliere_marker" method="POST">\n' +
             '   <label for="lname">Nome:</label><br>\n' +
             '   <input type="text" id="name" name="name" placeholder="Inserisci qui il nome..." required><br><br>\n' +
             '   <input type="hidden" id="long" name="long" value=' + layer.getLatLng().lng + '>' +
@@ -57,7 +57,7 @@ mymap.on(L.Draw.Event.CREATED, function (e) {
         }
 
         layer.bindPopup('<h3>Per continuare inserisci il nome della geofence: </h3>' +
-            '<form id="formGeofences" action="/home" method="POST">\n' +
+            '<form id="formGeofences" action="/geofence" method="POST">\n' +
             '   <label for="name">Nome:</label><br>\n' +
             '   <input type="text" id="name" name="name" placeholder="Inserisci qui il nome..."><br><br>\n' +
             '   <textarea id="message" name="message" rows="4" placeholder="Inserisci qui il messaggio da visualizzare quando si entra nella rastrelliera..." required></textarea><br><br>\n' +

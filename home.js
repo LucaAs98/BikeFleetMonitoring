@@ -80,8 +80,8 @@ $.getScript("./draw.js")
 //Bottone per aggiungere rastrelliere da file
 var btnAddRastrelliereFromFile = L.Control.extend({
     onAdd: function () {
-        var button = L.DomUtil.create('button', 'Aggiungi geofence');
-        button.innerHTML = 'Aggiungi geofence da file';
+        var button = L.DomUtil.create('button', 'Aggiungi rastrelliere');
+        button.innerHTML = 'Aggiungi rastrelliere da file';
         L.DomEvent.on(button, 'click', function () {
             var options = {
                 size: [400, 150],
@@ -93,7 +93,7 @@ var btnAddRastrelliereFromFile = L.Control.extend({
             }
             var dialog = L.control.dialog(options)
                 .setContent(
-                    '<form enctype="multipart/form-data"  id="formFile" action="/home" method="POST">' +
+                    '<form enctype="multipart/form-data"  id="formFile" action="/rastrelliere_file" method="POST">' +
                     '<input type="file" name="file" id="file" required>' +
                     '<button onclick="doupload()" name="submit">Upload File</button>' +
                     '</form>\n'
