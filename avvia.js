@@ -114,6 +114,20 @@ app.get("/vis_pren", async (req, res) => {
     }
 });
 
+app.get("/delPren", async (req, res) => {
+    var response = await delPrenotazione(req.query.codPren).catch((err) => errore_completo = err);
+
+    if (!response) {
+        console.log('Errore nella cancellazione della prenotazione.' + '\n' + errore_completo);
+    } else {
+        console.log('Cancellazione prenotazione effettuata');
+    }
+});
+
+function delPrenotazione(codPren) {
+    return client.query('DELETE FROM noleggio WHERE codice = ' + apice + codPren + apice + ';');
+}
+
 /*** Richieste POST ***/
 /* Facendo una richiesta "POST" ad URL "/prenota" si effettua il noleggio di una bici con i dati passati al body. */
 app.post("/prenota", (req, res) => {
@@ -217,22 +231,26 @@ app.post("/geofence", (req, res) => {
 
 /* Facendo una richiesta "POST" ad URL "/geofence" si aggiunge tramite disegno una geofence. All'interno si distingue se
 *  è una geofence vietata oppure no. */
-app.post("/prova_posizione", (req, res) => {
-    console.log(req.body.long + "-------------" + req.body.lat);
-    console.log(req.query);
-    query_insert = 'INSERT INTO prova_posizione_utente(geom) VALUES (ST_GeomFromText(' + apice + 'POINT(' + req.body.long + ' ' + req.body.lat + ')' + apice + '));'
+app.post("/addPosizione", (req, res) => {
+    query_insert = 'UPDATE bicicletta SET posizione = ST_GeomFromText(' + apice + 'POINT(' + req.body.long + ' ' + req.body.lat + ')' + apice + ') WHERE id = ' + req.body.id + ';'
     client.query(query_insert, async (err, result) => {
         if (err) {
             console.log('Errore non sono riuscito ad aggiungere la posizione!' + err);
         } else {
-            /* Riprendo le rastrelliere e se non ci sono stati errori rivado alla home. */
-            var response = await getRastrelliere().catch((err) => errore_completo = err);
+            console.log('Posizione aggiunta!');
+        }
+    });
+});
 
-            if (!response) {
-                console.log('Errore, non sono riuscito a caricare le posizione.' + '\n' + errore_completo);
-            } else {
-                console.log('Posizione aggiunta!');
-            }
+/* Facendo una richiesta "POST" ad URL "/registrazione" si aggiunge un utente al database. */
+app.post("/registrazione", (req, res) => {
+
+    query_insert = 'INSERT INTO utente(username, password) VALUES (' + apice + req.body.username + apice + ',' + apice + req.body.password + apice + ');'
+    client.query(query_insert, async (err, result) => {
+        if (err) {
+            console.log('Errore non sono riuscito ad aggiungere l\'utente!' + err);
+        } else {
+            console.log('Utente aggiunto!');
         }
     });
 });
