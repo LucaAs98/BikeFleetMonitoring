@@ -131,7 +131,7 @@ app.get("/checkDistance", async (req, res) => {
     if (!response) {
         console.log('Errore nel calcolo della distanza!.' + '\n' + errore_completo);
     } else {
-       res.json(response)
+        res.json(response.rows)
     }
 });
 
@@ -141,7 +141,7 @@ app.get("/rastrelliera_corrispondente", async (req, res) => {
     if (!response) {
         console.log('Errore nella ricerca della rastrelliera!.' + '\n' + errore_completo);
     } else {
-        res.json(response)
+        res.json(response.rows)
     }
 });
 
@@ -149,21 +149,21 @@ function delPrenotazione(codPren) {
     return client.query('DELETE FROM noleggio WHERE codice = ' + apice + codPren + apice + ';');
 }
 
-function checkDistance(longitudine, latitudine){
+function checkDistance(longitudine, latitudine) {
     return client.query('Select a1.id from rastrelliere as A1 where ST_Distance(A1.geom::geography, ST_GeomFromText(' +
         apice + 'POINT(' + longitudine + ' ' + latitudine + ')' + apice + ')::geography) <= 2');
 }
 
-function getRastrellieraFromBici(bici){
-    return client.query('select rastrelliera from lista_bici_rastrelliera where bicicletta = '+bici+';');
+function getRastrellieraFromBici(bici) {
+    return client.query('select rastrelliera from lista_bici_rastrelliera where bicicletta = ' + bici + ';');
 }
 
 /*** Richieste POST ***/
 /* Facendo una richiesta "POST" ad URL "/prenota" si effettua il noleggio di una bici con i dati passati al body. */
 app.post("/prenota", (req, res) => {
-    client.query('INSERT INTO noleggio(codice, bicicletta, utente, data_inizio, data_fine) VALUES(' + apice + req.body.cod + apice + ',' + req.body.bici + ',' + apice + req.body.utente + apice + ',' + apice + req.body.di + apice + ',' + apice + req.body.df + apice + ')', (err, result) => {
+    client.query('INSERT INTO noleggio(codice, bicicletta, utente, data_inizio, data_fine, iniziato) VALUES(' + apice + req.body.cod + apice + ',' + req.body.bici + ',' + apice + req.body.utente + apice + ',' + apice + req.body.di + apice + ',' + apice + req.body.df + apice + ',' + false + ')', (err, result) => {
         if (err) {
-            console.log('Errore!');
+            console.log('Errore durante la prenotazione!' + err);
         } else {
             console.log('Prenotazione effettuata!');
         }
@@ -288,10 +288,10 @@ app.post("/registrazione", (req, res) => {
 /* Facendo una richiesta "POST" ad URL "/registrazione" si aggiunge un utente al database. */
 app.post("/avvia_noleggio", (req, res) => {
 
-    query_insert = 'UPDATE noleggio SET iniziato = 1 where codice = ' + apice + req.body.codNoleggio + apice + ';'
+    query_insert = 'UPDATE noleggio SET iniziato = ' + true + ' where codice = ' + apice + req.body.codNoleggio + apice + ';'
     client.query(query_insert, async (err, result) => {
         if (err) {
-            console.log('Errore nell\'avvio del noleggio! + err');
+            console.log('Errore nell\'avvio del noleggio!' + err);
         } else {
             console.log('Noleggio avviato');
         }
@@ -306,7 +306,7 @@ app.post("/termina_noleggio", async (req, res) => {
         const query2 = 'delete from lista_bici_rastrelliera where bicicletta = req.body.bici'
         await client.query(query2)
         const res2 = await client.query(query2)
-        const query3 = 'insert into lista_bici_rastrelliera values ('+ req.body.rastrelliera +', '+req.body.bici +')'
+        const query3 = 'insert into lista_bici_rastrelliera values (' + req.body.rastrelliera + ', ' + req.body.bici + ')'
         await client.query('COMMIT')
     } catch (e) {
         await client.query('ROLLBACK')
@@ -338,7 +338,7 @@ function getListaBici(id) {
 }
 
 function getPrenotazione(cod_u) {
-    return client.query('SELECT codice, bicicletta FROM noleggio WHERE utente =' + cod_u + '  AND codice NOT IN  (SELECT noleggio FROM storico)');
+    return client.query('SELECT codice, bicicletta, iniziato FROM noleggio WHERE utente =' + cod_u + '  AND codice NOT IN  (SELECT noleggio FROM storico)');
 }
 
 // All'avvio apriamo la home con il browser di default.
