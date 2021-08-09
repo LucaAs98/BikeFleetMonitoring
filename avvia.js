@@ -90,17 +90,19 @@ app.get("/users", async (req, res) => {
         console.log('Errore, non sono riuscito a caricare gli utenti.' + '\n' + errore_completo);
     } else {
         res.json(response.rows);
+        console.log('Utenti caricati con successo' + '\n');
     }
 });
 
-/* Ad URL "/listabici" avremo il JSON di tutte le bici riferite ad una determinata rastrelliera. */
-app.get("/listabici", async (req, res) => {
+/* Ad URL "/lista_bici" avremo il JSON di tutte le bici riferite ad una determinata rastrelliera. */
+app.get("/lista_bici", async (req, res) => {
     var response = await getListaBici(req.query.id).catch((err) => errore_completo = err);
 
     if (!response) {
         console.log('Errore, non sono riuscito a caricare la lista delle bici.' + '\n' + errore_completo);
     } else {
         res.json(response.rows);
+        console.log('Lista delle bici caricata con successo' + '\n');
     }
 });
 
@@ -112,29 +114,22 @@ app.get("/vis_pren", async (req, res) => {
         console.log('Errore, non sono riuscito a caricare il codice della prenotazione.' + '\n' + errore_completo);
     } else {
         res.json(response.rows);
+        console.log('Codice della prenotazione caricato con successo' + '\n');
     }
 });
 
-app.get("/delPren", async (req, res) => {
-    var response = await delPrenotazione(req.query.codPren).catch((err) => errore_completo = err);
-
-    if (!response) {
-        console.log('Errore nella cancellazione della prenotazione.' + '\n' + errore_completo);
-    } else {
-        console.log('Cancellazione prenotazione effettuata');
-    }
-});
-
+/* Ad URL "/checkDistance" avremo l'id della rastrelliera a meno di 5 metri dall'utente. */
 app.get("/checkDistance", async (req, res) => {
-    var response = await checkDistance(req.query.lng, req.query.lat).catch((err) => errore_completo = err);
+    var response = await getRastrellieraVicino(req.query.lng, req.query.lat).catch((err) => errore_completo = err);
 
     if (!response) {
-        console.log('Errore nel calcolo della distanza!.' + '\n' + errore_completo);
+        console.log('Errore nel ritrovamento della rastrelliera vicino all\'utente!' + '\n' + errore_completo);
     } else {
         res.json(response.rows)
     }
 });
 
+/* Ad URL "/rastrelliera_corrispondente" avremo l'id della rastrelliera in cui è contenuta una determinata bici. */
 app.get("/rastrelliera_corrispondente", async (req, res) => {
     var response = await getRastrellieraFromBici(req.query.bici).catch((err) => errore_completo = err);
 
@@ -144,19 +139,6 @@ app.get("/rastrelliera_corrispondente", async (req, res) => {
         res.json(response.rows)
     }
 });
-
-function delPrenotazione(codPren) {
-    return client.query('DELETE FROM noleggio WHERE codice = ' + apice + codPren + apice + ';');
-}
-
-function checkDistance(longitudine, latitudine) {
-    return client.query('Select a1.id from rastrelliere as A1 where ST_Distance(A1.geom::geography, ST_GeomFromText(' +
-        apice + 'POINT(' + longitudine + ' ' + latitudine + ')' + apice + ')::geography) <= 2');
-}
-
-function getRastrellieraFromBici(bici) {
-    return client.query('select rastrelliera from lista_bici_rastrelliera where bicicletta = ' + bici + ';');
-}
 
 /*** Richieste POST ***/
 /* Facendo una richiesta "POST" ad URL "/prenota" si effettua il noleggio di una bici con i dati passati al body. */
@@ -259,8 +241,19 @@ app.post("/geofence", (req, res) => {
     }
 });
 
-/* Facendo una richiesta "POST" ad URL "/geofence" si aggiunge tramite disegno una geofence. All'interno si distingue se
-*  è una geofence vietata oppure no. */
+/* Facendo una richiesta "POST" ad URL "/registrazione" si aggiunge un utente al database. */
+app.post("/registrazione", (req, res) => {
+    query_insert = 'INSERT INTO utente(username, password) VALUES (' + apice + req.body.username + apice + ',' + apice + req.body.password + apice + ');'
+    client.query(query_insert, async (err, result) => {
+        if (err) {
+            console.log('Errore non sono riuscito ad aggiungere l\'utente!' + err);
+        } else {
+            console.log('Utente aggiunto!');
+        }
+    });
+});
+
+/* Facendo una richiesta "POST" ad URL "/addPosizione" si aggiorna la posizione della bicicletta ogni tot. secondi di tempo.  */
 app.post("/addPosizione", (req, res) => {
     query_insert = 'UPDATE bicicletta SET posizione = ST_GeomFromText(' + apice + 'POINT(' + req.body.long + ' ' + req.body.lat + ')' + apice + ') WHERE id = ' + req.body.id + ';'
     client.query(query_insert, async (err, result) => {
@@ -272,41 +265,37 @@ app.post("/addPosizione", (req, res) => {
     });
 });
 
-/* Facendo una richiesta "POST" ad URL "/registrazione" si aggiunge un utente al database. */
-app.post("/registrazione", (req, res) => {
-
-    query_insert = 'INSERT INTO utente(username, password) VALUES (' + apice + req.body.username + apice + ',' + apice + req.body.password + apice + ');'
-    client.query(query_insert, async (err, result) => {
-        if (err) {
-            console.log('Errore non sono riuscito ad aggiungere l\'utente!' + err);
-        } else {
-            console.log('Utente aggiunto!');
-        }
-    });
-});
-
-/* Facendo una richiesta "POST" ad URL "/registrazione" si aggiunge un utente al database. */
+/* Facendo una richiesta "POST" ad URL "/avvia_noleggio" si aggiorna lo stato del noleggio di una bicicletta in particolare
+ e successivamente si cancella tale bici dalla rastrelliera in cui era contenuta. */
 app.post("/avvia_noleggio", (req, res) => {
-
     query_insert = 'UPDATE noleggio SET iniziato = ' + true + ' where codice = ' + apice + req.body.codNoleggio + apice + ';'
     client.query(query_insert, async (err, result) => {
         if (err) {
-            console.log('Errore nell\'avvio del noleggio!' + err);
+            console.log('Errore nel settare il noleggio come iniziato!' + err);
         } else {
+            query_insert = 'DELETE FROM lista_bici_rastrelliera WHERE bicicletta =' + req.body.bici + ';'
+            client.query(query_insert, async (err, result) => {
+                if (err) {
+                    console.log('Errore nella cancellazione della bici dalla rastrelliera!' + err);
+                } else {
+                    console.log('Bici uscita dalla rastrelliera!');
+                }
+            });
             console.log('Noleggio avviato');
         }
     });
 });
 
+/* Facendo una richiesta "POST" ad URL "/termina_noleggio" se tutte le query scritte non danno problemi si fa terminare il noleggio
+* di una determinata bici. É particolare perchè viene effettuata una transizione. */
 app.post("/termina_noleggio", async (req, res) => {
+
     try {
         await client.query('BEGIN')
-        const query1 = 'insert into storico values (' + apice + req.body.codNoleggio + apice + ', ' + apice + req.body.storico + apice + ')'
-        const res = await client.query(query1)
-        const query2 = 'delete from lista_bici_rastrelliera where bicicletta = req.body.bici'
-        await client.query(query2)
-        const res2 = await client.query(query2)
-        const query3 = 'insert into lista_bici_rastrelliera values (' + req.body.rastrelliera + ', ' + req.body.bici + ')'
+        const query1 = 'INSERT INTO storico VALUES (' + apice + req.body.codNoleggio + apice + ', ST_GeomFromGeoJSON(' + apice + '{"type":"LineString","coordinates":' + req.body.geom + '}' + apice + '))';
+        await client.query(query1);
+        const query3 = 'INSERT INTO lista_bici_rastrelliera VALUES (' + req.body.rastrelliera + ', ' + req.body.bici + ')'
+        await client.query(query3)
         await client.query('COMMIT')
     } catch (e) {
         await client.query('ROLLBACK')
@@ -314,6 +303,18 @@ app.post("/termina_noleggio", async (req, res) => {
     }
 });
 
+/* Facendo una richiesta "POST" ad URL "/cancella_prenotazione" si rimuove la prenotazione dal db. */
+app.post("/cancella_prenotazione", async (req, res) => {
+    query_insert = 'DELETE FROM noleggio WHERE codice = ' + apice + req.body.cod_prenotazione + apice + ';';
+
+    client.query(query_insert, async (err, result) => {
+        if (err) {
+            console.log('Errore nella cancellazione della prenotazione.' + '\n' + errore_completo);
+        } else {
+            console.log('Cancellazione prenotazione effettuata');
+        }
+    });
+});
 
 /* Metodi per prendere dal DB ciò che ci serve. Ritorna poi alla get che l'ha chiamata, in modo tale da controllare se
 * ci sono stati errori altrimenti stampa nella pagina le righe della query trasformate in JSON. */
@@ -339,6 +340,15 @@ function getListaBici(id) {
 
 function getPrenotazione(cod_u) {
     return client.query('SELECT codice, bicicletta, iniziato FROM noleggio WHERE utente =' + cod_u + '  AND codice NOT IN  (SELECT noleggio FROM storico)');
+}
+
+function getRastrellieraVicino(longitudine, latitudine) {
+    return client.query('SELECT a1.id FROM rastrelliere AS A1 WHERE ST_Distance(A1.geom::geography, ST_GeomFromText(' +
+        apice + 'POINT(' + longitudine + ' ' + latitudine + ')' + apice + ')::geography) <= 2');
+}
+
+function getRastrellieraFromBici(bici) {
+    return client.query('SELECT rastrelliera FROM lista_bici_rastrelliera WHERE bicicletta = ' + bici + ';');
 }
 
 // All'avvio apriamo la home con il browser di default.
