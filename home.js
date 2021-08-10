@@ -116,32 +116,82 @@ function doupload() {
     }
 }
 
+/*
 
+window.abortLoopBikesRealTime = false;
 //Bottone per vedere gli utenti in real time
 var btnViewBikesRealTime = L.Control.extend({
     onAdd: function () {
-        var button = L.DomUtil.create('button', 'Bici real time');
-        button.innerHTML = 'Visualizza bici in real time';
-        L.DomEvent.on(button, 'click', function () {
-            alert("Visualizza bici in real time!")
-        });
+        // set timeout
+        var tid;
 
+        nascondi = false;
+        var button = L.DomUtil.create('button', 'Storico')
+        button.innerHTML = 'Visualizza bici noleggiate in tempo reale';
+        L.DomEvent.on(button, 'click', function () {
+            if (!nascondi) {
+                window.abortLoopBikesRealTime = false;
+                button.innerHTML = 'Nascondi bici noleggiate in tempo reale';
+                tid = setTimeout(getScriptBikeRealTime, 2000);
+                nascondi = true;
+            } else {
+                button.innerHTML = 'Visualizza bici noleggiate in tempo reale';
+                window.abortLoopBikesRealTime = true;
+                mymap.removeLayer(window.layerBiciRealTime);
+                nascondi = false;
+            }
+        });
         return button;
     }
 });
 
-var viewBikes = (new btnViewBikesRealTime()).addTo(mymap);
+function abortTimer(tid2) {
+    clearTimeout(tid2);
+}
 
+function getScriptBikeRealTime() {
+    $.getScript("./get_bici_real_time.js")
+        .done(function (script, textStatus) {
+            console.log("Caricamento bici in tempo reale avvenuto con successo!");
+            if (window.abortLoopBikesRealTime) {
+                abortTimer(tid);
+            } else {
+                mymap.removeLayer(window.layerBiciRealTime);
+            }
+        })
+        .fail(function (jqxhr, settings, exception) {
+            console.log("Errore nel caricamento delle bici in tempo reale");
+        })
+    tid = setTimeout(getScriptBikeRealTime, 2000); // repeat myself
+}
+
+var viewBikes = (new btnViewBikesRealTime()).addTo(mymap);
+*/
 
 //Bottone per vedere lo storico dei tragitti
+
 var btnViewStorico = L.Control.extend({
     onAdd: function () {
+        nascondi = false;
         var button = L.DomUtil.create('button', 'Storico');
         button.innerHTML = 'Visualizza storico tragitti';
         L.DomEvent.on(button, 'click', function () {
-            alert("Visualizza storico tragitti!")
+            if (!nascondi) {
+                button.innerHTML = 'Nascondi tragitto';
+                $.getScript("./get_storico.js")
+                    .done(function (script, textStatus) {
+                        console.log("Caricamento storico completato");
+                    })
+                    .fail(function (jqxhr, settings, exception) {
+                        console.log("Errore nel caricamento storico tragitti");
+                    });
+                nascondi = true;
+            } else {
+                button.innerHTML = 'Visualizza storico tragitti';
+                mymap.removeLayer(window.layerStorico);
+                nascondi = false;
+            }
         });
-
         return button;
     }
 });

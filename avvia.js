@@ -94,6 +94,29 @@ app.get("/users", async (req, res) => {
     }
 });
 
+/* Ad URL "/storico" avremo il JSON di tutte lo storico dei percorsi. */
+app.get("/storico", async (req, res) => {
+    var response = await getStorico().catch((err) => errore_completo = err);
+
+    if (!response) {
+        console.log('Errore, non sono riuscito a caricare lo storico dei tragitti.' + '\n' + errore_completo);
+    } else {
+        res.json(response.rows);
+    }
+});
+
+/* Ad URL "/bici_real_time" avremo il JSON di tutte le bici noleggiate in real time. */
+app.get("/bici_real_time", async (req, res) => {
+    var response = await getBiciRealTime().catch((err) => errore_completo = err);
+
+    if (!response) {
+        console.log('Errore, non sono riuscito a caricare le bici noleggiate in real time.' + '\n' + errore_completo);
+    } else {
+        console.log('Caricate le bici noleggiate in real time.');
+        res.json(response.rows);
+    }
+});
+
 /* Ad URL "/lista_bici" avremo il JSON di tutte le bici riferite ad una determinata rastrelliera. */
 app.get("/lista_bici", async (req, res) => {
     var response = await getListaBici(req.query.id).catch((err) => errore_completo = err);
@@ -301,6 +324,7 @@ app.post("/termina_noleggio", async (req, res) => {
         await client.query('ROLLBACK')
         console.log('Terminazione errata del noleggio !' + e);
     }
+    console.log('Terminazione noleggio avvenuta con successo')
 });
 
 /* Facendo una richiesta "POST" ad URL "/cancella_prenotazione" si rimuove la prenotazione dal db. */
@@ -343,13 +367,25 @@ function getPrenotazione(cod_u) {
 }
 
 function getRastrellieraVicino(longitudine, latitudine) {
+
     return client.query('SELECT a1.id FROM rastrelliere AS A1 WHERE ST_Distance(A1.geom::geography, ST_GeomFromText(' +
-        apice + 'POINT(' + longitudine + ' ' + latitudine + ')' + apice + ')::geography) <= 2');
+        apice + 'POINT(' + longitudine + ' ' + latitudine + ')' + apice + ')::geography) <= 15 order by ' +
+        'ST_Distance(A1.geom::geography, ST_GeomFromText(' +
+        apice + 'POINT(' + longitudine + ' ' + latitudine + ')' + apice + ')::geography)');
+
 }
 
 function getRastrellieraFromBici(bici) {
     return client.query('SELECT rastrelliera FROM lista_bici_rastrelliera WHERE bicicletta = ' + bici + ';');
 }
+
+function getStorico() {
+    return client.query('SELECT ST_AsGeoJSON(traiettoria) AS geometry FROM storico');
+}
+/*
+function getBiciRealTime() {
+    return client.query('SELECT ST_X(posizione) AS long, ST_Y(posizione) AS lat FROM bicicletta, noleggio WHERE noleggio.iniziato = true AND noleggio.bicicletta = bicicletta.id AND codice NOT IN (SELECT noleggio FROM storico)');
+}*/
 
 // All'avvio apriamo la home con il browser di default.
 open("http://localhost:3000/home");
