@@ -163,6 +163,16 @@ app.get("/rastrelliera_corrispondente", async (req, res) => {
     }
 });
 
+/* Ad URL "/intersezione_geofence" avremo la geofence intersecata dall'utente.*/
+app.get("/intersezione_geofence", async (req, res) => {
+    var response = await getIntersezioneGeofence(req.query.lng, req.query.lat).catch((err) => errore_completo = err);
+
+    if (!response) {
+        console.log('Errore nella ricerca di una geofence intersecata!.' + '\n' + errore_completo);
+    } else {
+        res.json(response.rows)
+    }
+});
 /*** Richieste POST ***/
 /* Facendo una richiesta "POST" ad URL "/prenota" si effettua il noleggio di una bici con i dati passati al body. */
 app.post("/prenota", (req, res) => {
@@ -312,7 +322,6 @@ app.post("/avvia_noleggio", (req, res) => {
 /* Facendo una richiesta "POST" ad URL "/termina_noleggio" se tutte le query scritte non danno problemi si fa terminare il noleggio
 * di una determinata bici. É particolare perchè viene effettuata una transizione. */
 app.post("/termina_noleggio", async (req, res) => {
-
     try {
         await client.query('BEGIN')
         const query1 = 'INSERT INTO storico VALUES (' + apice + req.body.codNoleggio + apice + ', ST_GeomFromGeoJSON(' + apice + '{"type":"LineString","coordinates":' + req.body.geom + '}' + apice + '))';
@@ -379,9 +388,15 @@ function getRastrellieraFromBici(bici) {
     return client.query('SELECT rastrelliera FROM lista_bici_rastrelliera WHERE bicicletta = ' + bici + ';');
 }
 
+function getIntersezioneGeofence(longitudine, latitudine) {
+    return client.query('Select G1.name from areevietate_geofence as G1 where ST_Contains(G1.geom, ST_GeomFromText(' +
+        apice + 'POINT(' + longitudine + ' ' + latitudine + ')' + apice + ')::geography::geometry);');
+}
+
 function getStorico() {
     return client.query('SELECT ST_AsGeoJSON(traiettoria) AS geometry FROM storico');
 }
+
 /*
 function getBiciRealTime() {
     return client.query('SELECT ST_X(posizione) AS long, ST_Y(posizione) AS lat FROM bicicletta, noleggio WHERE noleggio.iniziato = true AND noleggio.bicicletta = bicicletta.id AND codice NOT IN (SELECT noleggio FROM storico)');
