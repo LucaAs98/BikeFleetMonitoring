@@ -389,18 +389,20 @@ function getRastrellieraFromBici(bici) {
 }
 
 function getIntersezioneGeofence(longitudine, latitudine) {
-    return client.query('Select G1.name from areevietate_geofence as G1 where ST_Contains(G1.geom, ST_GeomFromText(' +
-        apice + 'POINT(' + longitudine + ' ' + latitudine + ')' + apice + ')::geography::geometry);');
+    return client.query('Select G1.name,G1.message,G1.vietato  from (SELECT id, name, geom, message,true as vietato FROM areevietate_geofence ' +
+        'union  SELECT id, name, geom, message,false as vietato FROM poi_geofence) as G1  where ST_Contains(G1.geom, ST_GeomFromText(' +
+        apice + 'POINT(' + longitudine + ' ' + latitudine + ')' + apice + ')::geography::geometry) order by vietato DESC,name ;');
+
+
 }
 
 function getStorico() {
     return client.query('SELECT ST_AsGeoJSON(traiettoria) AS geometry FROM storico');
 }
 
-/*
 function getBiciRealTime() {
     return client.query('SELECT ST_X(posizione) AS long, ST_Y(posizione) AS lat FROM bicicletta, noleggio WHERE noleggio.iniziato = true AND noleggio.bicicletta = bicicletta.id AND codice NOT IN (SELECT noleggio FROM storico)');
-}*/
+}
 
 // All'avvio apriamo la home con il browser di default.
 open("http://localhost:3000/home");
