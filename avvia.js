@@ -287,15 +287,16 @@ app.post("/registrazione", (req, res) => {
 });
 
 /* Facendo una richiesta "POST" ad URL "/addPosizione" si aggiorna la posizione della bicicletta ogni tot. secondi di tempo.  */
-app.post("/addPosizione", (req, res) => {
-    query_insert = 'UPDATE bicicletta SET posizione = ST_GeomFromText(' + apice + 'POINT(' + req.body.long + ' ' + req.body.lat + ')' + apice + ') WHERE id = ' + req.body.id + ';'
-    client.query(query_insert, async (err, result) => {
-        if (err) {
-            console.log('Errore non sono riuscito ad aggiungere la posizione!' + err);
-        } else {
-            console.log('Posizione aggiunta!');
-        }
-    });
+app.post("/addPosizione", async (req, res) => {
+     query_insert = 'UPDATE bicicletta SET posizione = ST_GeomFromText(' + apice + 'POINT(' + req.body.long + ' ' + req.body.lat + ')' + apice + ') WHERE id = ' + req.body.id + ';'
+     client.query(query_insert, async (err, result) => {
+         if (err) {
+             console.log('Errore non sono riuscito ad aggiungere la posizione!' + err);
+         } else {
+             console.log('Posizione aggiunta!');
+             res.json(result.rows);
+         }
+     });
 });
 
 /* Facendo una richiesta "POST" ad URL "/avvia_noleggio" si aggiorna lo stato del noleggio di una bicicletta in particolare
@@ -392,8 +393,6 @@ function getIntersezioneGeofence(longitudine, latitudine) {
     return client.query('Select G1.name,G1.message,G1.vietato  from (SELECT id, name, geom, message,true as vietato FROM areevietate_geofence ' +
         'union  SELECT id, name, geom, message,false as vietato FROM poi_geofence) as G1  where ST_Contains(G1.geom, ST_GeomFromText(' +
         apice + 'POINT(' + longitudine + ' ' + latitudine + ')' + apice + ')::geography::geometry) order by vietato DESC,name ;');
-
-
 }
 
 function getStorico() {

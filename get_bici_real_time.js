@@ -48,6 +48,5 @@ function addRealTime(data) {
             });
         },
     });
-
     window.layerBiciRealTime.addTo(mymap);
 }

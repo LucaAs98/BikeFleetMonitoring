@@ -116,58 +116,6 @@ function doupload() {
     }
 }
 
-/*
-
-window.abortLoopBikesRealTime = false;
-//Bottone per vedere gli utenti in real time
-var btnViewBikesRealTime = L.Control.extend({
-    onAdd: function () {
-        // set timeout
-        var tid;
-
-        nascondi = false;
-        var button = L.DomUtil.create('button', 'Storico')
-        button.innerHTML = 'Visualizza bici noleggiate in tempo reale';
-        L.DomEvent.on(button, 'click', function () {
-            if (!nascondi) {
-                window.abortLoopBikesRealTime = false;
-                button.innerHTML = 'Nascondi bici noleggiate in tempo reale';
-                tid = setTimeout(getScriptBikeRealTime, 2000);
-                nascondi = true;
-            } else {
-                button.innerHTML = 'Visualizza bici noleggiate in tempo reale';
-                window.abortLoopBikesRealTime = true;
-                mymap.removeLayer(window.layerBiciRealTime);
-                nascondi = false;
-            }
-        });
-        return button;
-    }
-});
-
-function abortTimer(tid2) {
-    clearTimeout(tid2);
-}
-
-function getScriptBikeRealTime() {
-    $.getScript("./get_bici_real_time.js")
-        .done(function (script, textStatus) {
-            console.log("Caricamento bici in tempo reale avvenuto con successo!");
-            if (window.abortLoopBikesRealTime) {
-                abortTimer(tid);
-            } else {
-                mymap.removeLayer(window.layerBiciRealTime);
-            }
-        })
-        .fail(function (jqxhr, settings, exception) {
-            console.log("Errore nel caricamento delle bici in tempo reale");
-        })
-    tid = setTimeout(getScriptBikeRealTime, 2000); // repeat myself
-}
-
-var viewBikes = (new btnViewBikesRealTime()).addTo(mymap);
-*/
-
 //Bottone per vedere lo storico dei tragitti
 
 var btnViewStorico = L.Control.extend({
@@ -197,3 +145,63 @@ var btnViewStorico = L.Control.extend({
 });
 
 var viewStorico = (new btnViewStorico()).addTo(mymap);
+
+
+$.getScript("./start_simulation.js")
+    .done(function (script, textStatus) {
+        console.log("Simulazione avviata!");
+    })
+    .fail(function (jqxhr, settings, exception) {
+        console.log("Errore nell'avvio della simulazione!");
+    });
+
+
+window.abortLoopBikesRealTime = false;
+
+//Bottone per vedere gli utenti in real time
+var btnViewBikesRealTime = L.Control.extend({
+    onAdd: function () {
+        // set timeout
+        var tid;
+
+        nascondi = false;
+        var button = L.DomUtil.create('button', 'Storico')
+        button.innerHTML = 'Visualizza bici noleggiate in tempo reale';
+        L.DomEvent.on(button, 'click', function () {
+            if (!nascondi) {
+                window.abortLoopBikesRealTime = false;
+                button.innerHTML = 'Nascondi bici noleggiate in tempo reale';
+                tid = setTimeout(getScriptBikeRealTime, 500);
+                nascondi = true;
+            } else {
+                button.innerHTML = 'Visualizza bici noleggiate in tempo reale';
+                window.abortLoopBikesRealTime = true;
+                mymap.removeLayer(window.layerBiciRealTime);
+                nascondi = false;
+            }
+        });
+        return button;
+    }
+});
+
+function abortTimer(tid2) {
+    clearTimeout(tid2);
+}
+
+function getScriptBikeRealTime() {
+    $.getScript("./get_bici_real_time.js")
+        .done(function (script, textStatus) {
+            console.log("Caricamento bici in tempo reale avvenuto con successo!");
+            if (window.abortLoopBikesRealTime) {
+                abortTimer(tid);
+            } else {
+                mymap.removeLayer(window.layerBiciRealTime);
+            }
+        })
+        .fail(function (jqxhr, settings, exception) {
+            console.log("Errore nel caricamento delle bici in tempo reale");
+        })
+    tid = setTimeout(getScriptBikeRealTime, 500); // repeat myself
+}
+
+var viewBikes = (new btnViewBikesRealTime()).addTo(mymap);
