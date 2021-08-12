@@ -95,42 +95,7 @@ async function avvia() {
         });
     }
 
-    /* setTimeout(sendPositions, 1000);
-
-     async function sendPositions() {
-         formBody = [];
-         var arrLatLng = arrayGeom[i].split(",");
-
-         var coordinates = {
-             lat: arrLatLng[0].replace("[", ""),
-             long: arrLatLng[1].replace("]", ""),
-             id: prenotazione.bici,
-         }
-
-         console.log(coordinates.long);
-
-         for (var property in coordinates) {
-             var encodedKey = encodeURIComponent(property);
-             var encodedValue = encodeURIComponent(coordinates[property]);
-             formBody.push(encodedKey + "=" + encodedValue);
-         }
-         formBody = formBody.join("&");
-
-         fetch('/addPosizione', {
-             method: 'POST',
-             headers: {
-                 'Content-Type': 'application/x-www-form-urlencoded'
-             },
-             body: formBody,
-         });
-         i++;
-         if (i < arrayGeom.length) {
-             setTimeout(sendPositions, 500);
-         } else {
-             terminaNoleggio();
-         }
-     }*/
-
+    /* Mandiamo le posizioni in tempo reale. Successivamente  (a posizioni finite) terminiamo il noleggio. */
     var i = 0;
     sendPositions();
 

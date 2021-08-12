@@ -14,6 +14,7 @@ const express = require("express");
 var bodyParser = require('body-parser');
 const fileUpload = require('express-fileupload');
 const open = require('open');
+const clustering = require("density-clustering");
 
 const client = new Client({
     user: 'postgres',
@@ -173,6 +174,8 @@ app.get("/intersezione_geofence", async (req, res) => {
         res.json(response.rows)
     }
 });
+
+
 /*** Richieste POST ***/
 /* Facendo una richiesta "POST" ad URL "/prenota" si effettua il noleggio di una bici con i dati passati al body. */
 app.post("/prenota", (req, res) => {
@@ -288,15 +291,15 @@ app.post("/registrazione", (req, res) => {
 
 /* Facendo una richiesta "POST" ad URL "/addPosizione" si aggiorna la posizione della bicicletta ogni tot. secondi di tempo.  */
 app.post("/addPosizione", async (req, res) => {
-     query_insert = 'UPDATE bicicletta SET posizione = ST_GeomFromText(' + apice + 'POINT(' + req.body.long + ' ' + req.body.lat + ')' + apice + ') WHERE id = ' + req.body.id + ';'
-     client.query(query_insert, async (err, result) => {
-         if (err) {
-             console.log('Errore non sono riuscito ad aggiungere la posizione!' + err);
-         } else {
-             console.log('Posizione aggiunta!');
-             res.json(result.rows);
-         }
-     });
+    query_insert = 'UPDATE bicicletta SET posizione = ST_GeomFromText(' + apice + 'POINT(' + req.body.long + ' ' + req.body.lat + ')' + apice + ') WHERE id = ' + req.body.id + ';'
+    client.query(query_insert, async (err, result) => {
+        if (err) {
+            console.log('Errore non sono riuscito ad aggiungere la posizione!' + err);
+        } else {
+            console.log('Posizione aggiunta!');
+            res.json(result.rows);
+        }
+    });
 });
 
 /* Facendo una richiesta "POST" ad URL "/avvia_noleggio" si aggiorna lo stato del noleggio di una bicicletta in particolare
@@ -348,6 +351,32 @@ app.post("/cancella_prenotazione", async (req, res) => {
             console.log('Cancellazione prenotazione effettuata');
         }
     });
+});
+
+/* Facendo una richiesta "POST" ad URL "/cancella_prenotazione" si rimuove la prenotazione dal db. */
+app.post("/popola_rastrelliere", async (req, res) => {
+    query_insert = 'DELETE FROM noleggio WHERE codice = ' + apice + req.body.cod_prenotazione + apice + ';';
+
+    client.query(query_insert, async (err, result) => {
+        if (err) {
+            console.log('Errore nella cancellazione della prenotazione.' + '\n' + errore_completo);
+        } else {
+            console.log('Cancellazione prenotazione effettuata');
+        }
+    });
+});
+
+
+app.post("/clustering", async (req, res) => {
+    var dataset = req.body;
+    var k_clusters = parseInt(dataset.numClusters);
+    dataset = dataset.lat.map((e, i) => [parseFloat(e), parseFloat(dataset.long[i])]);
+
+    var clustering = require('density-clustering');
+    var kmeans = new clustering.KMEANS();
+    var clusters = kmeans.run(dataset, k_clusters);
+    const JSONClusters = JSON.parse(JSON.stringify(Object.assign({}, clusters)));
+    console.log(JSONClusters);
 });
 
 /* Metodi per prendere dal DB ciò che ci serve. Ritorna poi alla get che l'ha chiamata, in modo tale da controllare se

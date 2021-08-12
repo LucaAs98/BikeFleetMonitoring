@@ -117,7 +117,6 @@ function doupload() {
 }
 
 //Bottone per vedere lo storico dei tragitti
-
 var btnViewStorico = L.Control.extend({
     onAdd: function () {
         nascondi = false;
@@ -147,25 +146,16 @@ var btnViewStorico = L.Control.extend({
 var viewStorico = (new btnViewStorico()).addTo(mymap);
 
 
-$.getScript("./start_simulation.js")
-    .done(function (script, textStatus) {
-        console.log("Simulazione avviata!");
-    })
-    .fail(function (jqxhr, settings, exception) {
-        console.log("Errore nell'avvio della simulazione!");
-    });
-
-
+//Bottone per vedere gli utenti in real time
 window.abortLoopBikesRealTime = false;
 
-//Bottone per vedere gli utenti in real time
 var btnViewBikesRealTime = L.Control.extend({
     onAdd: function () {
         // set timeout
         var tid;
 
         nascondi = false;
-        var button = L.DomUtil.create('button', 'Storico')
+        var button = L.DomUtil.create('button', 'Bici tempo reale')
         button.innerHTML = 'Visualizza bici noleggiate in tempo reale';
         L.DomEvent.on(button, 'click', function () {
             if (!nascondi) {
@@ -205,3 +195,71 @@ function getScriptBikeRealTime() {
 }
 
 var viewBikes = (new btnViewBikesRealTime()).addTo(mymap);
+
+//Bottone per avviare la simulazione
+var btnSimulazione = L.Control.extend({
+    onAdd: function () {
+        var button = L.DomUtil.create('button', 'Simulazione');
+        button.innerHTML = 'Avvia Simulazione';
+        L.DomEvent.on(button, 'click', function () {
+            button.innerHTML = 'Simulazione avviata!';
+            $.getScript("./start_simulation.js")
+                .done(function (script, textStatus) {
+                    console.log("Simulazione avviata!");
+                })
+                .fail(function (jqxhr, settings, exception) {
+                    console.log("Errore nell'avvio della simulazione!");
+                });
+            button.disabled = true;
+        });
+        return button;
+    }
+});
+
+var viewSimulazione = (new btnSimulazione()).addTo(mymap);
+var dialogNumClusters;
+
+
+//Bottone per avviare il clustering delle bici
+var btnClustering = L.Control.extend({
+    onAdd: function () {
+        var button = L.DomUtil.create('button', 'Clustering');
+        button.innerHTML = 'Avvia Clustering';
+        L.DomEvent.on(button, 'click', function () {
+            button.innerHTML = 'Clustering avviato!';
+            var options = {
+                size: [400, 150],
+                minSize: [100, 100],
+                maxSize: [350, 350],
+                anchor: [100, 700],
+                position: "topleft",
+                initOpen: true
+            }
+            dialogNumClusters = L.control.dialog(options)
+                .setContent(
+                    '<label> Numero di cluster: </label></br>' +
+                    '<input type="number" name="number_cluster" id="number_cluster" value="3" required>' +
+                    '<button onclick="avviaScriptClustering()">Avvia</button>'
+                ).addTo(mymap);
+            dialogNumClusters.hideResize();
+            dialogNumClusters.freeze();
+            dialogNumClusters.open();
+            button.disabled = true;
+        });
+        return button;
+    }
+});
+
+var viewClustering = (new btnClustering()).addTo(mymap);
+
+function avviaScriptClustering(){
+    window.numberOfClusters = document.getElementById('number_cluster').value;
+    dialogNumClusters.close();
+    $.getScript("./get_clustering.js")
+        .done(function (script, textStatus) {
+            console.log("Clustering avviato!");
+        })
+        .fail(function (jqxhr, settings, exception) {
+            console.log("Errore nella visualizzazione del clustering!");
+        });
+}
