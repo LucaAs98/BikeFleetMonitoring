@@ -12,7 +12,7 @@ function addStorico(data) {
 
     data.forEach(function (lineString) {
         var geometry = JSON.parse(lineString.geometry);
-        console.log(geometry)
+
         var feature = {
             type: 'Feature',
             geometry: {

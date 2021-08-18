@@ -125,7 +125,7 @@ var btnViewStorico = L.Control.extend({
         L.DomEvent.on(button, 'click', function () {
             if (!nascondi) {
                 button.innerHTML = 'Nascondi tragitto';
-                $.getScript("./get_storico.js")
+                $.getScript("./get_intensita_attivazioni.js")
                     .done(function (script, textStatus) {
                         console.log("Caricamento storico completato");
                     })

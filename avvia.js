@@ -434,4 +434,3 @@ function getBiciRealTime() {
 
 // All'avvio apriamo la home con il browser di default.
 open("http://localhost:3000/home");
-
