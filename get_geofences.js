@@ -1,8 +1,6 @@
 var sorted = Object.entries(window.attivazioniGeofence).sort(([, a], [, b]) => a.attivazioni - b.attivazioni)
 var rangeArray = split(0, sorted[sorted.length - 1][1].attivazioni, 6);
 
-console.log(rangeArray);
-
 function split(left, right, parts) {
     var result = [],
         delta = (right - left) / (parts - 1);

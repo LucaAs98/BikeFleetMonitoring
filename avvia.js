@@ -189,7 +189,7 @@ app.get("/bici_fuori_range", async (req, res) => {
 /*** Richieste POST ***/
 /* Facendo una richiesta "POST" ad URL "/prenota" si effettua il noleggio di una bici con i dati passati al body. */
 app.post("/prenota", (req, res) => {
-    client.query('INSERT INTO noleggio(codice, bicicletta, utente, data_inizio, data_fine, iniziato, rastrelliera) VALUES(' + apice + req.body.cod + apice + ',' + req.body.bici + ',' + apice + req.body.utente + apice + ',' + apice + req.body.di + apice + ',' + apice + req.body.df + apice + ',' + false + ','+ req.body.ras +')', (err, result) => {
+    client.query('INSERT INTO noleggio(codice, bicicletta, utente, data_inizio, data_fine, iniziato, rastrelliera) VALUES(' + apice + req.body.cod + apice + ',' + req.body.bici + ',' + apice + req.body.utente + apice + ',' + apice + req.body.di + apice + ',' + apice + req.body.df + apice + ',' + false + ',' + req.body.ras + ')', (err, result) => {
         if (err) {
             console.log('Errore durante la prenotazione!' + err);
         } else {
@@ -376,11 +376,27 @@ app.post("/clustering", async (req, res) => {
     var k_clusters = parseInt(dataset.numClusters);
     dataset = dataset.lat.map((e, i) => [parseFloat(e), parseFloat(dataset.long[i])]);
 
+
     var clustering = require('density-clustering');
     var kmeans = new clustering.KMEANS();
     var clusters = kmeans.run(dataset, k_clusters);
-    const JSONClusters = JSON.parse(JSON.stringify(Object.assign({}, clusters)));
-    console.log(JSONClusters);
+
+    var i = 0;
+    var newDataset = [];
+
+    for (arrs of clusters) {
+        for (arr of arrs) {
+            newDataset.push({
+                id: arr + 1,
+                ras: dataset[arr],
+                cluster: i
+            });
+        }
+        i += 1;
+    }
+    const JSONClusters = JSON.parse(JSON.stringify(Object.assign({}, newDataset)));
+    res.json(JSONClusters);
+
 });
 
 /* Metodi per prendere dal DB ciò che ci serve. Ritorna poi alla get che l'ha chiamata, in modo tale da controllare se
@@ -443,7 +459,7 @@ function getBiciRealTime() {
     return client.query('SELECT ST_X(posizione) AS long, ST_Y(posizione) AS lat, bicicletta.id FROM bicicletta, noleggio WHERE noleggio.iniziato = true AND noleggio.bicicletta = bicicletta.id AND codice NOT IN (SELECT noleggio FROM storico)');
 }
 
-function getBiciFuoriRange(){
+function getBiciFuoriRange() {
     return client.query('SELECT bicicletta.id\n' +
         '    FROM bicicletta, noleggio, rastrelliere\n' +
         '    WHERE noleggio.iniziato = true\n' +
@@ -455,6 +471,17 @@ function getBiciFuoriRange(){
 }
 
 
-
 // All'avvio apriamo la home con il browser di default.
 open("http://localhost:3000/home");
+
+
+[
+    0, 1, 2, 3, 5, 7, 8, 9, 20, 27, 28, 29,
+    30, 32, 36, 39, 40, 41, 42, 43, 44, 45, 46, 55,
+    56, 57, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68,
+    70, 71, 72, 73, 75, 76, 77, 78, 79, 82, 84, 87,
+    95, 99, 100, 102, 109, 113, 114, 125, 127, 130
+]
+
+
+

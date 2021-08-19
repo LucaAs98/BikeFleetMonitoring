@@ -35,8 +35,6 @@ function addMarkers(data) {
 
     var geoJson = {type: 'FeatureCollection', features: jsonFeatures};
 
-    //L.geoJson(geoJson).addTo(mymap);
-
     L.geoJson(geoJson, {
         pointToLayer: function (feature, latlng) {
             return L.marker(latlng);
@@ -52,5 +50,5 @@ function addMarkers(data) {
         }
     }
 
-    L.layerGroup([markers]).addTo(mymap);
+    window.clusterRastrelliere = L.layerGroup([markers]).addTo(mymap);
 }

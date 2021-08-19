@@ -187,13 +187,14 @@ function getScriptBikeRealTime() {
 
 var viewBikes = (new btnViewBikesRealTime()).addTo(mymap);
 
+var buttonSimulazione = L.DomUtil.create('button', 'Simulazione');
 //Bottone per avviare la simulazione
 var btnSimulazione = L.Control.extend({
     onAdd: function () {
-        var button = L.DomUtil.create('button', 'Simulazione');
-        button.innerHTML = 'Avvia Simulazione';
-        L.DomEvent.on(button, 'click', function () {
-            button.innerHTML = 'Simulazione avviata!';
+        var buttonSimulazione = L.DomUtil.create('button', 'Simulazione');
+        buttonSimulazione.innerHTML = 'Avvia Simulazione';
+        L.DomEvent.on(buttonSimulazione, 'click', function () {
+            buttonSimulazione.innerHTML = 'Simulazione avviata!';
             $.getScript("./start_simulation.js")
                 .done(function (script, textStatus) {
                     console.log("Simulazione avviata!");
@@ -201,9 +202,9 @@ var btnSimulazione = L.Control.extend({
                 .fail(function (jqxhr, settings, exception) {
                     console.log("Errore nell'avvio della simulazione!");
                 });
-            button.disabled = true;
+            buttonSimulazione.disabled = true;
         });
-        return button;
+        return buttonSimulazione;
     }
 });
 
@@ -211,33 +212,43 @@ var viewSimulazione = (new btnSimulazione()).addTo(mymap);
 var dialogNumClusters;
 
 
+var buttonClustering = L.DomUtil.create('button', 'Clustering');
 //Bottone per avviare il clustering delle bici
 var btnClustering = L.Control.extend({
     onAdd: function () {
-        var button = L.DomUtil.create('button', 'Clustering');
-        button.innerHTML = 'Avvia Clustering';
-        L.DomEvent.on(button, 'click', function () {
-            button.innerHTML = 'Clustering avviato!';
-            var options = {
-                size: [400, 150],
-                minSize: [100, 100],
-                maxSize: [350, 350],
-                anchor: [100, 700],
-                position: "topleft",
-                initOpen: true
+        nascondi = false;
+        buttonClustering.innerHTML = 'Avvia Clustering';
+        L.DomEvent.on(buttonClustering, 'click', function () {
+            if (!nascondi) {
+                buttonClustering.innerHTML = 'Clustering avviato!';
+                var options = {
+                    size: [400, 150],
+                    minSize: [100, 100],
+                    maxSize: [350, 350],
+                    anchor: [100, 700],
+                    position: "topleft",
+                    initOpen: true
+                }
+                dialogNumClusters = L.control.dialog(options)
+                    .setContent(
+                        '<label> Numero di cluster: </label></br>' +
+                        '<input type="number" name="number_cluster" id="number_cluster" value="3" max="10" required>' +
+                        '<button onclick="avviaScriptClustering()">Avvia</button>'
+                    ).addTo(mymap);
+                dialogNumClusters.hideResize();
+                dialogNumClusters.freeze();
+                dialogNumClusters.open();
+                buttonClustering.innerHTML = 'Termina clustering';
+                buttonClustering.disabled = true;
+                nascondi = true;
+            } else {
+                buttonClustering.innerHTML = 'Avvia Clustering';
+                nascondi = false;
+                mymap.removeLayer(window.clusterKMEANS);
+                window.clusterRastrelliere.addTo(mymap);
             }
-            dialogNumClusters = L.control.dialog(options)
-                .setContent(
-                    '<label> Numero di cluster: </label></br>' +
-                    '<input type="number" name="number_cluster" id="number_cluster" value="3" required>' +
-                    '<button onclick="avviaScriptClustering()">Avvia</button>'
-                ).addTo(mymap);
-            dialogNumClusters.hideResize();
-            dialogNumClusters.freeze();
-            dialogNumClusters.open();
-            button.disabled = true;
         });
-        return button;
+        return buttonClustering;
     }
 });
 
@@ -245,12 +256,20 @@ var viewClustering = (new btnClustering()).addTo(mymap);
 
 function avviaScriptClustering() {
     window.numberOfClusters = document.getElementById('number_cluster').value;
-    dialogNumClusters.close();
-    $.getScript("./get_clustering.js")
-        .done(function (script, textStatus) {
-            console.log("Clustering avviato!");
-        })
-        .fail(function (jqxhr, settings, exception) {
-            console.log("Errore nella visualizzazione del clustering!");
-        });
+    console.log(window.numberOfClusters);
+
+    if (document.getElementById('number_cluster').value > 10) {
+        alert("Non puoi inserire una suddivisione in cluster maggiore di 10!");
+    } else {
+        dialogNumClusters.remove();
+        mymap.removeLayer(dialogNumClusters);
+        $.getScript("./get_clustering.js")
+            .done(function (script, textStatus) {
+                console.log("Clustering avviato!");
+                buttonClustering.disabled = false;
+            })
+            .fail(function (jqxhr, settings, exception) {
+                console.log("Errore nella visualizzazione del clustering!");
+            });
+    }
 }
