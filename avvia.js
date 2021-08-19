@@ -175,11 +175,21 @@ app.get("/intersezione_geofence", async (req, res) => {
     }
 });
 
+/*Ad URL "/bici_fuori_range" avremo bici che risiedono al di fuori di una certa distanza dalla rastrelliera di partenza.*/
+app.get("/bici_fuori_range", async (req, res) => {
+    var response = await getBiciFuoriRange().catch((err) => errore_completo = err);
+
+    if (!response) {
+        console.log('Errore nella ricerca delle bici fuori range!.' + '\n' + errore_completo);
+    } else {
+        res.json(response.rows)
+    }
+})
 
 /*** Richieste POST ***/
 /* Facendo una richiesta "POST" ad URL "/prenota" si effettua il noleggio di una bici con i dati passati al body. */
 app.post("/prenota", (req, res) => {
-    client.query('INSERT INTO noleggio(codice, bicicletta, utente, data_inizio, data_fine, iniziato) VALUES(' + apice + req.body.cod + apice + ',' + req.body.bici + ',' + apice + req.body.utente + apice + ',' + apice + req.body.di + apice + ',' + apice + req.body.df + apice + ',' + false + ')', (err, result) => {
+    client.query('INSERT INTO noleggio(codice, bicicletta, utente, data_inizio, data_fine, iniziato, rastrelliera) VALUES(' + apice + req.body.cod + apice + ',' + req.body.bici + ',' + apice + req.body.utente + apice + ',' + apice + req.body.di + apice + ',' + apice + req.body.df + apice + ',' + false + ','+ req.body.ras +')', (err, result) => {
         if (err) {
             console.log('Errore durante la prenotazione!' + err);
         } else {
@@ -310,14 +320,6 @@ app.post("/avvia_noleggio", (req, res) => {
         if (err) {
             console.log('Errore nel settare il noleggio come iniziato!' + err);
         } else {
-            query_insert = 'DELETE FROM lista_bici_rastrelliera WHERE bicicletta =' + req.body.bici + ';'
-            client.query(query_insert, async (err, result) => {
-                if (err) {
-                    console.log('Errore nella cancellazione della bici dalla rastrelliera!' + err);
-                } else {
-                    console.log('Bici uscita dalla rastrelliera!');
-                }
-            });
             console.log('Noleggio avviato');
         }
     });
@@ -330,6 +332,8 @@ app.post("/termina_noleggio", async (req, res) => {
         await client.query('BEGIN')
         const query1 = 'INSERT INTO storico VALUES (' + apice + req.body.codNoleggio + apice + ', ST_GeomFromGeoJSON(' + apice + '{"type":"LineString","coordinates":' + req.body.geom + '}' + apice + '))';
         await client.query(query1);
+        const query2 = 'DELETE FROM lista_bici_rastrelliera WHERE bicicletta =' + req.body.bici + ';'
+        await client.query(query2);
         const query3 = 'INSERT INTO lista_bici_rastrelliera VALUES (' + req.body.rastrelliera + ', ' + req.body.bici + ')'
         await client.query(query3)
         await client.query('COMMIT')
@@ -398,7 +402,14 @@ function getUsers() {
 }
 
 function getListaBici(id) {
-    return client.query('SELECT bicicletta AS id FROM public.lista_bici_rastrelliera WHERE rastrelliera = ' + id + ';');
+    return client.query('SELECT bicicletta AS id FROM public.lista_bici_rastrelliera WHERE rastrelliera = ' + id + '' +
+        ' and bicicletta not in (select noleggio.bicicletta\n' +
+        ' FROM bicicletta, noleggio\n' +
+        ' WHERE noleggio.iniziato = true\n' +
+        ' AND noleggio.bicicletta = bicicletta.id\n' +
+        ' AND codice NOT IN (SELECT noleggio FROM storico)\n' +
+        ' )\n' +
+        ' order by id;');
 }
 
 function getPrenotazione(cod_u) {
@@ -429,8 +440,21 @@ function getStorico() {
 }
 
 function getBiciRealTime() {
-    return client.query('SELECT ST_X(posizione) AS long, ST_Y(posizione) AS lat FROM bicicletta, noleggio WHERE noleggio.iniziato = true AND noleggio.bicicletta = bicicletta.id AND codice NOT IN (SELECT noleggio FROM storico)');
+    return client.query('SELECT ST_X(posizione) AS long, ST_Y(posizione) AS lat, bicicletta.id FROM bicicletta, noleggio WHERE noleggio.iniziato = true AND noleggio.bicicletta = bicicletta.id AND codice NOT IN (SELECT noleggio FROM storico)');
 }
+
+function getBiciFuoriRange(){
+    return client.query('SELECT bicicletta.id\n' +
+        '    FROM bicicletta, noleggio, rastrelliere\n' +
+        '    WHERE noleggio.iniziato = true\n' +
+        '    AND rastrelliere.id = noleggio.rastrelliera\n' +
+        '    AND noleggio.bicicletta = bicicletta.id\n' +
+        '    AND codice NOT IN (SELECT noleggio FROM storico)\n' +
+        '    and ST_DistanceSphere(rastrelliere.geom, bicicletta.posizione) > 5000'
+    )
+}
+
+
 
 // All'avvio apriamo la home con il browser di default.
 open("http://localhost:3000/home");
