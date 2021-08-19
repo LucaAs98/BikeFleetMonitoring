@@ -51,22 +51,14 @@ $.getScript("./get_rastrelliere.js")
         console.log("Errore nel caricamento delle rastrelliere");
     });
 
-$.getScript("./get_geofences.js")
+$.getScript("./get_intensita_attivazioni.js")
     .done(function (script, textStatus) {
-        console.log("Caricamento geofences completato");
+        console.log("Caricamento attivazioni completato");
     })
     .fail(function (jqxhr, settings, exception) {
-        console.log("Errore nel caricamento delle geofences");
+        console.log("Errore nel caricamento delle attivazioni");
     });
 
-
-$.getScript("./get_geofences_vietate.js")
-    .done(function (script, textStatus) {
-        console.log("Caricamento geofences vietate completato");
-    })
-    .fail(function (jqxhr, settings, exception) {
-        console.log("Errore nel caricamento delle geofences vietate");
-    });
 
 $.getScript("./draw.js")
     .done(function (script, textStatus) {
@@ -125,7 +117,7 @@ var btnViewStorico = L.Control.extend({
         L.DomEvent.on(button, 'click', function () {
             if (!nascondi) {
                 button.innerHTML = 'Nascondi tragitto';
-                $.getScript("./get_intensita_attivazioni.js")
+                $.getScript("./get_storico.js")
                     .done(function (script, textStatus) {
                         console.log("Caricamento storico completato");
                     })
@@ -184,9 +176,8 @@ function getScriptBikeRealTime() {
             console.log("Caricamento bici in tempo reale avvenuto con successo!");
             if (window.abortLoopBikesRealTime) {
                 abortTimer(tid);
-            } else {
-                mymap.removeLayer(window.layerBiciRealTime);
             }
+            mymap.removeLayer(window.layerBiciRealTime);
         })
         .fail(function (jqxhr, settings, exception) {
             console.log("Errore nel caricamento delle bici in tempo reale");
@@ -252,7 +243,7 @@ var btnClustering = L.Control.extend({
 
 var viewClustering = (new btnClustering()).addTo(mymap);
 
-function avviaScriptClustering(){
+function avviaScriptClustering() {
     window.numberOfClusters = document.getElementById('number_cluster').value;
     dialogNumClusters.close();
     $.getScript("./get_clustering.js")
