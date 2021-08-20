@@ -403,6 +403,34 @@ app.post("/clustering", async (req, res) => {
 
 });
 
+app.post("/delete_inizializzazione", async (req, res) => {
+    query_insert = 'TRUNCATE TABLE bicicletta RESTART IDENTITY; DELETE FROM lista_bici_rastrelliera; DELETE FROM noleggio; DELETE FROM storico; DELETE FROM utente;';
+
+    client.query(query_insert, async (err, result) => {
+        if (err) {
+            console.log('Errore nella cancellazione dell\'inizializzazione del database! ' + '\n' + err);
+        } else {
+            console.log('Cancellazione in inizializzazione del database andata a buon fine!');
+        }
+    });
+    res.end();
+});
+
+app.post("/inizializza_database", async (req, res) => {
+    let query_insert = 'INSERT INTO bicicletta(posizione) VALUES (ST_GeomFromText(' + apice + 'POINT(' + req.body.long + ' ' + req.body.lat + ')' + apice + '));';
+    query_insert += ' INSERT INTO lista_bici_rastrelliera(rastrelliera, bicicletta) VALUES (' + req.body.id + ', ' + req.body.id_bici + ');';
+
+    client.query(query_insert, async (err, result) => {
+        if (err) {
+            console.log('Errore nell\'inizializzazione del database! ' + '\n' + err);
+        } else {
+            console.log('Inizializzazione del database andata a buon fine!');
+            res.json(result.rows);
+        }
+    });
+});
+
+
 /* Metodi per prendere dal DB ciò che ci serve. Ritorna poi alla get che l'ha chiamata, in modo tale da controllare se
 * ci sono stati errori altrimenti stampa nella pagina le righe della query trasformate in JSON. */
 function getRastrelliere() {

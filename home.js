@@ -43,7 +43,7 @@ var vediAttivazioni = false;
 L.control.scale().addTo(mymap);
 L.control.layers(baseMaps).addTo(mymap);
 
-var rastrelliereData, geofenceData, geofenceVietateData;
+var geofenceData, geofenceVietateData;
 
 /**** CARICA RASRELLIERE *****/
 $.getScript("./get_rastrelliere.js")
@@ -354,3 +354,29 @@ var btnViewAttivazioni = L.Control.extend({
 });
 
 var viewAttivazioni = (new btnViewAttivazioni()).addTo(mymap);
+
+
+/**** RESET *****/
+var btnReset = L.Control.extend({
+    onAdd: function () {
+        nascondi = false;
+        var buttonReset = L.DomUtil.create('button', 'Inizializza');
+        buttonReset.innerHTML = 'Resetta database';
+        L.DomEvent.on(buttonReset, 'click', function () {
+            if (!nascondi) {
+                $.getScript("./inizializza_database.js")
+                    .done(function (script, textStatus) {
+                        console.log("Inizializzazione database completata");
+                    })
+                    .fail(function (jqxhr, settings, exception) {
+                        console.log("Errore nell\'inizializzazione del database!");
+                    });
+                nascondi = true;
+                buttonReset.disabled = true;
+            }
+        });
+        return buttonReset;
+    }
+});
+
+var inizializza = (new btnReset()).addTo(mymap);
