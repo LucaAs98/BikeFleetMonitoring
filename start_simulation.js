@@ -1,41 +1,39 @@
 avvia();
 
 async function avvia() {
-    var geom = ""
-    var formBody = [];
 
-    var latRastrellieraPartenza = 44.48761;
-    var longRastrellieraPArtenza = 11.344264;
 
-    var user = {
-        username: "Luca",
-        password: "6666"
+    let arrUtenti = [];
+    let arrPrenotazioni = [];
+    let formBody = [];
+    let geom = [];
+    let maxUtenti = 3;
+
+
+    function randomString(length, chars) {
+        let result = '';
+        for (let i = length; i > 0; --i) result += chars[Math.floor(Math.random() * chars.length)];
+        return result;
     }
 
-    var maxSalti = Math.floor(Math.random() * (30 - 10 + 1) + 10)
 
-    var prenotazione = {
-        di: "2021-08-11 11:05:00",
-        df: "2021-08-11 11:05:00",
-        utente: user.username,
-        bici: 6,
-        cod: "ciaoGerry!",
-        ras: 1,
+    for (let j = 0; j < maxUtenti; j++) {
+
+        let user = {
+            username: "User " + j,
+            password: "6666"
+        }
+        arrUtenti.push(user);
     }
 
-    var noleggio = {
-        codNoleggio: prenotazione.cod,
-        bici: prenotazione.bici
-    }
 
-    /* Crea nuovo utente */
-    await newUser();
+    /* Inserimento in db dei nuovi utenti */
+    for (const user1 of arrUtenti) {
 
-    function newUser() {
         formBody = [];
-        for (var property in user) {
-            var encodedKey = encodeURIComponent(property);
-            var encodedValue = encodeURIComponent(user[property]);
+        for (let property in user1) {
+            let encodedKey = encodeURIComponent(property);
+            let encodedValue = encodeURIComponent(user1[property]);
             formBody.push(encodedKey + "=" + encodedValue);
         }
         formBody = formBody.join("&");
@@ -47,16 +45,36 @@ async function avvia() {
             },
             body: formBody,
         });
+        geom.push("");
+
     }
 
     /* Faccio prenotare la bici 6 a tale utente. */
-    await newPrenotazione();
 
-    async function newPrenotazione() {
+
+    for (const user1 of arrUtenti) {
+        const n = arrUtenti.indexOf(user1);
+
+        let prenotazione = {
+            di: "2021-08-11 11:05:00",
+            df: "2021-08-11 11:05:00",
+            utente: user1.username,
+            bici: n + 2,
+            cod: randomString(10, '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'),
+            ras: 1,
+        }
+
+        arrPrenotazioni.push(prenotazione);
+
+
+    }
+
+    for (const prenotazione of arrPrenotazioni) {
+
         formBody = [];
-        for (var property in prenotazione) {
-            var encodedKey = encodeURIComponent(property);
-            var encodedValue = encodeURIComponent(prenotazione[property]);
+        for (let property in prenotazione) {
+            let encodedKey = encodeURIComponent(property);
+            let encodedValue = encodeURIComponent(prenotazione[property]);
             formBody.push(encodedKey + "=" + encodedValue);
         }
         formBody = formBody.join("&");
@@ -68,16 +86,23 @@ async function avvia() {
             },
             body: formBody,
         });
+
     }
 
     /* Faccio iniziare il noleggio. */
-    await newNoleggio();
+    for (const prenotazione of arrPrenotazioni) {
 
-    async function newNoleggio() {
+        let noleggio = {
+            codNoleggio: prenotazione.cod,
+
+        }
+
+
         formBody = [];
-        for (var property in noleggio) {
-            var encodedKey = encodeURIComponent(property);
-            var encodedValue = encodeURIComponent(noleggio[property]);
+        for (let property in noleggio) {
+
+            let encodedKey = encodeURIComponent(property);
+            let encodedValue = encodeURIComponent(noleggio[property]);
             formBody.push(encodedKey + "=" + encodedValue);
         }
         formBody = formBody.join("&");
@@ -89,115 +114,132 @@ async function avvia() {
             },
             body: formBody,
         });
+
     }
 
+
+    let latRastrellieraPartenza = 44.48761;
+    let longRastrellieraPArtenza = 11.344264;
+
+    let maxSalti = Math.floor(Math.random() * (30 - 10 + 1) + 10)
+
     /* Mandiamo le posizioni in tempo reale. Successivamente  (a posizioni finite) terminiamo il noleggio. */
-    var i = 0;
-    var x0 = 11.343083149519329; //longitudine centro
-    var y0 = 44.501726198465064; //latitudine centro
-    var rd = 1300 / 111300;
+    let i = 0;
+    let x0 = 11.343083149519329; //longitudine centro
+    let y0 = 44.501726198465064; //latitudine centro
+    let rd = 1300 / 111300;
     sendPositions();
 
     async function sendPositions() {
 
-        formBody = [];
+        for (const prenotazione of arrPrenotazioni) {
+            const n = arrPrenotazioni.indexOf(prenotazione);
 
-        var lat;
-        var long;
+            formBody = [];
 
-        if (geom.length === 0) {
-            lat = latRastrellieraPartenza;  //posizione rastrelliera di partenza
-            long = longRastrellieraPArtenza;
-        } else {
-            //calcolo coordinate random
-            var u = Math.random();
-            var v = Math.random();
+            let lat;
+            let long;
 
-            var w = rd * Math.sqrt(u)
-            var t = 2 * Math.PI * v
-            var x = w * Math.cos(t)
-            var y = w * Math.sin(t)
-
-            long = (x / Math.cos(y0)) + x0;
-            lat = y + y0;
-        }
-
-        //Creazione della stringa con tutte le geometrie
-        if (geom.length > 0) {
-            geom += ",";
-        }
-        geom += "[" + long + "," + lat + "]";
-
-        //add della posizione
-        var coordinates = {
-            long: long,
-            lat: lat,
-            id: prenotazione.bici,
-        }
-
-        for (var property in coordinates) {
-            var encodedKey = encodeURIComponent(property);
-            var encodedValue = encodeURIComponent(coordinates[property]);
-            formBody.push(encodedKey + "=" + encodedValue);
-        }
-        formBody = formBody.join("&");
-
-        console.log(formBody);
-
-        fetch('/addPosizione', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded'
-            },
-            body: formBody,
-        }).then(async () => {
-            i++;
-            if (i < maxSalti) {//arrayGeom.length){
-                setTimeout(sendPositions, 1000);
+            if (geom[n].length === 0) {
+                lat = latRastrellieraPartenza;  //posizione rastrelliera di partenza
+                long = longRastrellieraPArtenza;
             } else {
-                //se la posizione finale non è vicino a una rastrelliera, lo spostamento continua
-                const response = await fetch('/checkDistance?lat=' + lat + '&lng=' + long, {
-                    method: 'GET',
-                });
-                const data = await response.json();
-                var id;
-                console.log(data)
-                if(data[0] !== undefined){
-                    id = data[0].id;
-                    terminaNoleggio(id);
-                }else{
-                    setTimeout(sendPositions, 1000);
-                }
+                //calcolo coordinate random
+                let u = Math.random();
+                let v = Math.random();
+
+                let w = rd * Math.sqrt(u)
+                let t = 2 * Math.PI * v
+                let x = w * Math.cos(t)
+                let y = w * Math.sin(t)
+
+                long = (x / Math.cos(y0)) + x0;
+                lat = y + y0;
             }
-        });
+
+            //Creazione della stringa con tutte le geometrie
+            if (geom[n].length > 0) {
+                geom[n] += ",";
+            }
+            geom[n] += "[" + long + "," + lat + "]";
+
+            //add della posizione
+            let coordinates = {
+                long: long,
+                lat: lat,
+                id: prenotazione.bici,
+            }
+
+            for (let property in coordinates) {
+                let encodedKey = encodeURIComponent(property);
+                let encodedValue = encodeURIComponent(coordinates[property]);
+                formBody.push(encodedKey + "=" + encodedValue);
+            }
+            formBody = formBody.join("&");
+
+
+            fetch('/addPosizione', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: formBody,
+            });
+
+
+        }
+        i++;
+        if (i < maxSalti) {//arrayGeom.length){
+            setTimeout(sendPositions, 1000);
+        } else {
+            terminaNoleggio();
+            //se la posizione finale non è vicino a una rastrelliera, lo spostamento continua
+            /* const response = await fetch('/checkDistance?lat=' + lat + '&lng=' + long, {
+                 method: 'GET',
+             });
+             const data = await response.json();
+             let id;
+             console.log(data)
+             if (data[0] !== undefined) {
+                 id = data[0].id;
+                 terminaNoleggio(id);
+             } else {
+                 setTimeout(sendPositions, 1000);
+             }*/
+        }
     }
 
     /* Faccio terminare il noleggio. */
-    async function terminaNoleggio(id) {
+    async function terminaNoleggio() {
 
-        console.log("" + geom + "")
+        for (const prenotazione of arrPrenotazioni) {
+            const n = arrPrenotazioni.indexOf(prenotazione);
 
-        var noleggioTerminato = {
-            codNoleggio: prenotazione.cod,
-            bici: prenotazione.bici,
-            geom: "[" + geom + "]",
-            rastrelliera: id
+            let noleggioTerminato = {
+                codNoleggio: prenotazione.cod,
+                bici: prenotazione.bici,
+                geom: "[" + geom[n] + "]",
+                rastrelliera: prenotazione.ras
+            }
+
+            formBody = [];
+            for (let property in noleggioTerminato) {
+                let encodedKey = encodeURIComponent(property);
+                let encodedValue = encodeURIComponent(noleggioTerminato[property]);
+                formBody.push(encodedKey + "=" + encodedValue);
+            }
+            formBody = formBody.join("&");
+
+            fetch('/termina_noleggio', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: formBody,
+            });
+
         }
 
-        formBody = [];
-        for (var property in noleggioTerminato) {
-            var encodedKey = encodeURIComponent(property);
-            var encodedValue = encodeURIComponent(noleggioTerminato[property]);
-            formBody.push(encodedKey + "=" + encodedValue);
-        }
-        formBody = formBody.join("&");
 
-        await fetch('/termina_noleggio', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded'
-            },
-            body: formBody,
-        });
     }
 }

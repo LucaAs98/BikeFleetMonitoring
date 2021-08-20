@@ -14,6 +14,7 @@ const express = require("express");
 var bodyParser = require('body-parser');
 const fileUpload = require('express-fileupload');
 const open = require('open');
+const clustering = require("density-clustering");
 
 const client = new Client({
     user: 'postgres',
@@ -296,6 +297,7 @@ app.post("/registrazione", (req, res) => {
             console.log('Utente aggiunto!');
         }
     });
+    res.end();
 });
 
 /* Facendo una richiesta "POST" ad URL "/addPosizione" si aggiorna la posizione della bicicletta ogni tot. secondi di tempo.  */
@@ -309,6 +311,7 @@ app.post("/addPosizione", async (req, res) => {
             res.json(result.rows);
         }
     });
+
 });
 
 /* Facendo una richiesta "POST" ad URL "/avvia_noleggio" si aggiorna lo stato del noleggio di una bicicletta in particolare
@@ -322,6 +325,7 @@ app.post("/avvia_noleggio", (req, res) => {
             console.log('Noleggio avviato');
         }
     });
+    res.end();
 });
 
 /* Facendo una richiesta "POST" ad URL "/termina_noleggio" se tutte le query scritte non danno problemi si fa terminare il noleggio
@@ -341,6 +345,7 @@ app.post("/termina_noleggio", async (req, res) => {
         console.log('Terminazione errata del noleggio !' + e);
     }
     console.log('Terminazione noleggio avvenuta con successo')
+    res.end();
 });
 
 /* Facendo una richiesta "POST" ad URL "/cancella_prenotazione" si rimuove la prenotazione dal db. */
@@ -369,8 +374,7 @@ app.post("/popola_rastrelliere", async (req, res) => {
     });
 });
 
-/* Facendo una richiesta "POST" ad URL "/clustering" si usa il metodo di nodejs per la clusterizzazione tramite KMEANS
- * delle bici. Si restituiscono le bici con il loro id e il loro numero di cluster. */
+
 app.post("/clustering", async (req, res) => {
     var dataset = req.body;
     var k_clusters = parseInt(dataset.numClusters);
@@ -396,6 +400,7 @@ app.post("/clustering", async (req, res) => {
     }
     const JSONClusters = JSON.parse(JSON.stringify(Object.assign({}, newDataset)));
     res.json(JSONClusters);
+
 });
 
 /* Metodi per prendere dal DB ciò che ci serve. Ritorna poi alla get che l'ha chiamata, in modo tale da controllare se
@@ -472,3 +477,9 @@ function getBiciFuoriRange() {
 
 // All'avvio apriamo la home con il browser di default.
 open("http://localhost:3000/home");
+
+
+
+
+
+
