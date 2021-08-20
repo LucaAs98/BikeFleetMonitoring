@@ -14,7 +14,6 @@ const express = require("express");
 var bodyParser = require('body-parser');
 const fileUpload = require('express-fileupload');
 const open = require('open');
-const clustering = require("density-clustering");
 
 const client = new Client({
     user: 'postgres',
@@ -370,7 +369,8 @@ app.post("/popola_rastrelliere", async (req, res) => {
     });
 });
 
-
+/* Facendo una richiesta "POST" ad URL "/clustering" si usa il metodo di nodejs per la clusterizzazione tramite KMEANS
+ * delle bici. Si restituiscono le bici con il loro id e il loro numero di cluster. */
 app.post("/clustering", async (req, res) => {
     var dataset = req.body;
     var k_clusters = parseInt(dataset.numClusters);
@@ -396,7 +396,6 @@ app.post("/clustering", async (req, res) => {
     }
     const JSONClusters = JSON.parse(JSON.stringify(Object.assign({}, newDataset)));
     res.json(JSONClusters);
-
 });
 
 /* Metodi per prendere dal DB ciò che ci serve. Ritorna poi alla get che l'ha chiamata, in modo tale da controllare se
@@ -473,15 +472,3 @@ function getBiciFuoriRange() {
 
 // All'avvio apriamo la home con il browser di default.
 open("http://localhost:3000/home");
-
-
-[
-    0, 1, 2, 3, 5, 7, 8, 9, 20, 27, 28, 29,
-    30, 32, 36, 39, 40, 41, 42, 43, 44, 45, 46, 55,
-    56, 57, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68,
-    70, 71, 72, 73, 75, 76, 77, 78, 79, 82, 84, 87,
-    95, 99, 100, 102, 109, 113, 114, 125, 127, 130
-]
-
-
-

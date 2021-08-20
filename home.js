@@ -38,11 +38,14 @@ var mymap = L.map('mapid', {
         position: 'topleft'
     },
 });
+var vediAttivazioni = false;
 
 L.control.scale().addTo(mymap);
 L.control.layers(baseMaps).addTo(mymap);
 
+var rastrelliereData, geofenceData, geofenceVietateData;
 
+/**** CARICA RASRELLIERE *****/
 $.getScript("./get_rastrelliere.js")
     .done(function (script, textStatus) {
         console.log("Caricamento rastrelliere completato");
@@ -51,15 +54,25 @@ $.getScript("./get_rastrelliere.js")
         console.log("Errore nel caricamento delle rastrelliere");
     });
 
-$.getScript("./get_intensita_attivazioni.js")
+/**** CARICA GEOFENCE *****/
+$.getScript("./get_geofences.js")
     .done(function (script, textStatus) {
-        console.log("Caricamento attivazioni completato");
+        console.log("Caricamento geofences completato");
     })
     .fail(function (jqxhr, settings, exception) {
-        console.log("Errore nel caricamento delle attivazioni");
+        console.log("Errore nel caricamento delle geofences");
     });
 
 
+$.getScript("./get_geofences_vietate.js")
+    .done(function (script, textStatus) {
+        console.log("Caricamento geofences vietate completato");
+    })
+    .fail(function (jqxhr, settings, exception) {
+        console.log("Errore nel caricamento delle geofences vietate");
+    });
+
+/**** DISEGNA MARKER, GEOFENCE *****/
 $.getScript("./draw.js")
     .done(function (script, textStatus) {
         console.log("Caricamento disegno completato");
@@ -69,6 +82,7 @@ $.getScript("./draw.js")
     });
 
 
+/**** RASTRELLIERE DA FILE *****/
 //Bottone per aggiungere rastrelliere da file
 var btnAddRastrelliereFromFile = L.Control.extend({
     onAdd: function () {
@@ -108,6 +122,8 @@ function doupload() {
     }
 }
 
+
+/**** STORICO TRAGITTI *****/
 //Bottone per vedere lo storico dei tragitti
 var btnViewStorico = L.Control.extend({
     onAdd: function () {
@@ -138,9 +154,10 @@ var btnViewStorico = L.Control.extend({
 var viewStorico = (new btnViewStorico()).addTo(mymap);
 
 
-//Bottone per vedere gli utenti in real time
+/**** BICI REAL-TIME *****/
 window.abortLoopBikesRealTime = false;
 
+//Bottone per vedere gli utenti in real time
 var btnViewBikesRealTime = L.Control.extend({
     onAdd: function () {
         // set timeout
@@ -187,7 +204,10 @@ function getScriptBikeRealTime() {
 
 var viewBikes = (new btnViewBikesRealTime()).addTo(mymap);
 
+
+/**** SIMULAZIONE *****/
 var buttonSimulazione = L.DomUtil.create('button', 'Simulazione');
+
 //Bottone per avviare la simulazione
 var btnSimulazione = L.Control.extend({
     onAdd: function () {
@@ -209,43 +229,49 @@ var btnSimulazione = L.Control.extend({
 });
 
 var viewSimulazione = (new btnSimulazione()).addTo(mymap);
+
+
+/**** CLUSTERING *****/
+var buttonClustering = L.DomUtil.create('button', 'Clustering');
+var maxCluster = 10;
 var dialogNumClusters;
 
+//Options per il dialog che si apre quando premiamo il bottone per clusterizzare
+var optionsDialogCluster = {
+    size: [400, 150],
+    minSize: [100, 100],
+    maxSize: [350, 350],
+    anchor: [100, 700],
+    position: "topleft",
+    initOpen: true
+}
 
-var buttonClustering = L.DomUtil.create('button', 'Clustering');
+//Dialogo per inserire il numero di cluster da fare
+dialogNumClusters = L.control.dialog(optionsDialogCluster).setContent('<label> Numero di cluster: </label></br>' +
+    '<input type="number" name="number_cluster" id="number_cluster" value="3" max="' + maxCluster + '" required>' +
+    '<button onclick="avviaScriptClustering()">Avvia</button>')
+
 //Bottone per avviare il clustering delle bici
 var btnClustering = L.Control.extend({
     onAdd: function () {
-        nascondi = false;
+        nascondi = false;   //Variabile per capire se il pulsante è stato attivato o meno
         buttonClustering.innerHTML = 'Avvia Clustering';
         L.DomEvent.on(buttonClustering, 'click', function () {
             if (!nascondi) {
-                buttonClustering.innerHTML = 'Clustering avviato!';
-                var options = {
-                    size: [400, 150],
-                    minSize: [100, 100],
-                    maxSize: [350, 350],
-                    anchor: [100, 700],
-                    position: "topleft",
-                    initOpen: true
-                }
-                dialogNumClusters = L.control.dialog(options)
-                    .setContent(
-                        '<label> Numero di cluster: </label></br>' +
-                        '<input type="number" name="number_cluster" id="number_cluster" value="3" max="10" required>' +
-                        '<button onclick="avviaScriptClustering()">Avvia</button>'
-                    ).addTo(mymap);
+                //Entriamo qui quando è stato iniziato il clustering
+                buttonClustering.innerHTML = 'Termina clustering';
+                dialogNumClusters.addTo(mymap);             //Aggiungiamo il dialog alla pagina
                 dialogNumClusters.hideResize();
                 dialogNumClusters.freeze();
                 dialogNumClusters.open();
-                buttonClustering.innerHTML = 'Termina clustering';
-                buttonClustering.disabled = true;
+                buttonClustering.disabled = true;           //Disabilitiamo  il bottone fino a quando non ha messo il numero di cluster
                 nascondi = true;
             } else {
+                //Entriamo qui quando è stato terminato il clustering
                 buttonClustering.innerHTML = 'Avvia Clustering';
+                mymap.removeLayer(window.clusterKMEANS);    //Togliamo la clusterizzazione dalla mappa
+                window.clusterRastrelliere.addTo(mymap);    //Ri-aggiungiamo le bici alla mappa
                 nascondi = false;
-                mymap.removeLayer(window.clusterKMEANS);
-                window.clusterRastrelliere.addTo(mymap);
             }
         });
         return buttonClustering;
@@ -254,15 +280,19 @@ var btnClustering = L.Control.extend({
 
 var viewClustering = (new btnClustering()).addTo(mymap);
 
+//Viene chiamata quando clicchiamo l'avvia sul dialog
 function avviaScriptClustering() {
-    window.numberOfClusters = document.getElementById('number_cluster').value;
-    console.log(window.numberOfClusters);
+    window.numberOfClusters = document.getElementById('number_cluster').value;  //Prendiamo il numero di cluster che l'utente ha scelto per il KMEANS
 
-    if (document.getElementById('number_cluster').value > 10) {
-        alert("Non puoi inserire una suddivisione in cluster maggiore di 10!");
+    //Se l'utente inserisce troppi cluster diamo errore, altrimenti (vedi else)
+    if (document.getElementById('number_cluster').value > maxCluster) {
+        alert("Non puoi inserire una suddivisione in cluster maggiore di " + maxCluster + "!");
     } else {
+        //Rimuoviamo il dialog
         dialogNumClusters.remove();
         mymap.removeLayer(dialogNumClusters);
+
+        //Avviamo lo script per clusterizzare
         $.getScript("./get_clustering.js")
             .done(function (script, textStatus) {
                 console.log("Clustering avviato!");
@@ -273,3 +303,54 @@ function avviaScriptClustering() {
             });
     }
 }
+
+
+/**** INTENSITA' ATTIVAZIONI GEOFENCE *****/
+var btnViewAttivazioni = L.Control.extend({
+    onAdd: function () {
+        nascondi = false;
+        var buttonAttivazioni = L.DomUtil.create('button', 'Attivazioni');
+        buttonAttivazioni.innerHTML = 'Visualizza intensità attivazioni geofence';
+        L.DomEvent.on(buttonAttivazioni, 'click', function () {
+            if (!nascondi) {
+                buttonAttivazioni.innerHTML = 'Nascondi intensità attivazioni geofence';
+                $.getScript("./get_intensita_attivazioni.js")
+                    .done(function (script, textStatus) {
+                        console.log("Caricamento attivazioni completato");
+                    })
+                    .fail(function (jqxhr, settings, exception) {
+                        console.log("Errore nel caricamento delle attivazioni");
+                    });
+                nascondi = true;
+            } else {
+                buttonAttivazioni.innerHTML = 'Visualizza intensità attivazioni geofence';
+                vediAttivazioni = false;
+                mymap.removeLayer(window.geofence);
+                mymap.removeLayer(window.geofenceVietate);
+                mymap.removeControl(window.legendGeofence);
+                mymap.removeControl(window.legendGeofenceVietate);
+                nascondi = false;
+
+                $.getScript("./get_geofences.js")
+                    .done(function (script, textStatus) {
+                        console.log("Caricamento geofences completato");
+                    })
+                    .fail(function (jqxhr, settings, exception) {
+                        console.log("Errore nel caricamento delle geofences");
+                    });
+
+
+                $.getScript("./get_geofences_vietate.js")
+                    .done(function (script, textStatus) {
+                        console.log("Caricamento geofences vietate completato");
+                    })
+                    .fail(function (jqxhr, settings, exception) {
+                        console.log("Errore nel caricamento delle geofences vietate");
+                    });
+            }
+        });
+        return buttonAttivazioni;
+    }
+});
+
+var viewAttivazioni = (new btnViewAttivazioni()).addTo(mymap);

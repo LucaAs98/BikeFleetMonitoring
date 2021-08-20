@@ -1,28 +1,13 @@
-var sorted = Object.entries(window.attivazioniGeofence).sort(([, a], [, b]) => a.attivazioni - b.attivazioni)
-var rangeArray = split(0, sorted[sorted.length - 1][1].attivazioni, 6);
-
-function split(left, right, parts) {
-    var result = [],
-        delta = (right - left) / (parts - 1);
-    while (left < right) {
-        result.push(left);
-        left += delta;
-    }
-    result.push(right);
-    return result;
-}
-
 getGeofencesVietate();
 
 async function getGeofencesVietate() {
     const response = await fetch('/geofenceVietate');
-    const data = await response.json();
+    window.geofenceVietateData = await response.json();
 
-    await addGeofencesVietate(data);
+    await addGeofencesVietate(window.geofenceVietateData);
 }
 
 function addGeofencesVietate(data) {
-
     var jsonFeatures = [];
 
     data.forEach(function (geofVietate) {
@@ -42,7 +27,7 @@ function addGeofencesVietate(data) {
 
     var geoJson = {type: 'FeatureCollection', features: jsonFeatures};
 
-    L.geoJson(geoJson, {
+    window.geofenceVietate = L.geoJson(geoJson, {
         style: geofenceStyle,
     }).addTo(mymap);
 
@@ -52,37 +37,50 @@ function addGeofencesVietate(data) {
                 d >= rangeArray[3] ? '#e76a72' :
                     d >= rangeArray[2] ? '#f692a6' :
                         d >= rangeArray[1] ? '#febad7' :
-                            d >= rangeArray[0] ?  '#ffe4ff' :
+                            d >= rangeArray[0] ? '#ffe4ff' :
                                 '#000000';
     }
+
     function geofenceStyle(feature) {
-        return {
-            fillColor: getColorGeofences(window.attivazioniGeofence[feature.properties.name].attivazioni),
-            weight: 3,
-            opacity: 1,
-            color: '#610000',
-            fillOpacity: 0.7
-        };
-    }
-
-    var legend = L.control({position: 'bottomleft'});
-
-    legend.onAdd = function () {
-
-        var div = L.DomUtil.create('div', 'info legend'),
-            grades = rangeArray,
-            labels = [];
-
-        div.innerHTML = '<p>Attivazioni geofence vietate:</p>'
-        // loop through our density intervals and generate a label with a colored square for each interval
-        for (var i = 0; i < grades.length; i++) {
-            div.innerHTML +=
-                '<i style="background:' + getColorGeofences(grades[i] + 1) + '"></i> ' +
-                grades[i].toFixed(2) + (grades[i + 1] ? '&ndash;' + grades[i + 1].toFixed(2) + '<br>' : '+');
+        if (vediAttivazioni) {
+            return {
+                fillColor: getColorGeofences(window.attivazioniGeofence[feature.properties.name].attivazioni),
+                weight: 3,
+                opacity: 1,
+                color: '#610000',
+                fillOpacity: 0.7
+            };
+        } else {
+            return {
+                fillColor: 'red',
+                weight: 3,
+                opacity: 1,
+                color: '#610000',
+                fillOpacity: 0.6
+            };
         }
 
-        return div;
-    };
+    }
 
-    legend.addTo(mymap);
+    //Se dobbiamo visualizzare le attivazioni aggiungiamo anche la legenda alla mappa
+    if (vediAttivazioni) {
+        window.legendGeofenceVietate = L.control({position: 'bottomleft'});
+
+        window.legendGeofenceVietate.onAdd = function () {
+            var div = L.DomUtil.create('div', 'info legend'),
+                grades = rangeArray,
+                labels = [];
+
+            div.innerHTML = '<p>Attivazioni geofence vietate:</p>'
+            // loop through our density intervals and generate a label with a colored square for each interval
+            for (var i = 0; i < grades.length; i++) {
+                div.innerHTML +=
+                    '<i style="background:' + getColorGeofences(grades[i] + 1) + '"></i> ' +
+                    grades[i].toFixed(2) + (grades[i + 1] ? '&ndash;' + grades[i + 1].toFixed(2) + '<br>' : '+');
+            }
+            return div;
+        };
+
+        window.legendGeofenceVietate.addTo(mymap);
+    }
 }

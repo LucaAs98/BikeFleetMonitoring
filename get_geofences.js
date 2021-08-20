@@ -1,25 +1,10 @@
-var sorted = Object.entries(window.attivazioniGeofence).sort(([, a], [, b]) => a.attivazioni - b.attivazioni)
-var rangeArray = split(0, sorted[sorted.length - 1][1].attivazioni, 6);
-
-function split(left, right, parts) {
-    var result = [],
-        delta = (right - left) / (parts - 1);
-    while (left < right) {
-        result.push(left);
-        left += delta;
-    }
-    result.push(right);
-    return result;
-}
-
-
 getGeofences();
 
 async function getGeofences() {
     const response = await fetch('/geofence');
-    const data = await response.json();
+    window.geofenceData = await response.json();
 
-    await addGeofences(data);
+    await addGeofences(window.geofenceData);
 }
 
 async function addGeofences(data) {
@@ -41,7 +26,7 @@ async function addGeofences(data) {
 
     var geoJson = {type: 'FeatureCollection', features: jsonFeatures};
 
-    L.geoJson(geoJson, {
+    window.geofence = L.geoJson(geoJson, {
         style: geofenceStyle,
     }).addTo(mymap);
 
@@ -57,33 +42,43 @@ async function addGeofences(data) {
 
 
     function geofenceStyle(feature) {
-        return {
-            fillColor: getColorGeofences(window.attivazioniGeofence[feature.properties.name].attivazioni),
-            weight: 3,
-            opacity: 1,
-            color: '#008080',
-            fillOpacity: 0.7
-        };
+        if (vediAttivazioni) {
+            return {
+                fillColor: getColorGeofences(window.attivazioniGeofence[feature.properties.name].attivazioni),
+                weight: 3,
+                opacity: 1,
+                color: '#005e00',
+                fillOpacity: 0.7
+            };
+        } else {
+            return {
+                fillColor: 'green',
+                weight: 3,
+                opacity: 1,
+                color: '#005e00',
+                fillOpacity: 0.6
+            };
+        }
     }
 
-    var legend = L.control({position: 'bottomleft'});
+    //Se dobbiamo visualizzare le attivazioni aggiungiamo anche la legenda alla mappa
+    if (vediAttivazioni) {
+        window.legendGeofence = L.control({position: 'bottomleft'});
 
-    legend.onAdd = function () {
+        window.legendGeofence.onAdd = function () {
+            var div = L.DomUtil.create('div', 'info legend'),
+                grades = rangeArray,
+                labels = [];
 
-        var div = L.DomUtil.create('div', 'info legend'),
-            grades = rangeArray,
-            labels = [];
+            div.innerHTML = '<p>Attivazioni geofence normali</p>';
+            for (var i = 0; i < grades.length; i++) {
+                div.innerHTML +=
+                    '<i style="background:' + getColorGeofences(grades[i] + 1) + '"></i> ' +
+                    grades[i].toFixed(2) + (grades[i + 1] ? '&ndash;' + grades[i + 1].toFixed(2) + '<br>' : '+');
+            }
+            return div;
+        };
 
-        // loop through our density intervals and generate a label with a colored square for each interval
-        div.innerHTML = '<p>Attivazioni geofence normali</p>';
-        for (var i = 0; i < grades.length; i++) {
-            div.innerHTML +=
-                '<i style="background:' + getColorGeofences(grades[i] + 1) + '"></i> ' +
-                grades[i].toFixed(2) + (grades[i + 1] ? '&ndash;' + grades[i + 1].toFixed(2) + '<br>' : '+');
-        }
-
-        return div;
-    };
-
-    legend.addTo(mymap);
+        window.legendGeofence.addTo(mymap);
+    }
 }

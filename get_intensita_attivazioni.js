@@ -1,6 +1,7 @@
 getIntensitaAttivazioni();
 
 async function getIntensitaAttivazioni() {
+    vediAttivazioni = true;
     const response = await fetch('/storico');
     const data = await response.json();
 
@@ -10,11 +11,9 @@ async function getIntensitaAttivazioni() {
 async function addIntensitaAttivazioni(data) {
     /* Prendiamo le geofence normali e creiamo un oggetto che le contenga, ci servirà per calcolare il numero
      * di attivazioni. */
-    var geofenceResponse = await fetch('/geofence');
-    var geofence = await geofenceResponse.json();
     window.attivazioniGeofence = {};
 
-    for (const key of geofence) {
+    for (const key of window.geofenceData) {
         window.attivazioniGeofence[key.name] = {
             attivazioni: 0,
             vietata: 'False',
@@ -22,17 +21,14 @@ async function addIntensitaAttivazioni(data) {
     }
 
     //Prendiamo le geofence vietate e aggiungiamole al nostro oggetto
-    geofenceResponse = await fetch('/geofenceVietate');
-    geofence = await geofenceResponse.json();
-
-
-    for (const key of geofence) {
+    for (const key of window.geofenceVietateData) {
         window.attivazioniGeofence[key.name] = {
             attivazioni: 0,
             vietata: 'True',
         };
     }
 
+    //Provare a velocizzare il tutto, questo fa rallentare la visualizzazione
     for (const lineString of data) {
         var geometry = JSON.parse(lineString.geometry);
         var geofenceIntersecate = [];
@@ -65,6 +61,11 @@ async function addIntensitaAttivazioni(data) {
         }
     }
 
+    mymap.removeLayer(window.geofence);
+    mymap.removeLayer(window.geofenceVietate);
+
+    let max = Math.max.apply(null, Object.values(window.attivazioniGeofence).map(item => item.attivazioni));
+    window.rangeArray = split(0, max, 6);
 
     $.getScript("./get_geofences.js")
         .done(function (script, textStatus) {
@@ -82,4 +83,15 @@ async function addIntensitaAttivazioni(data) {
         .fail(function (jqxhr, settings, exception) {
             console.log("Errore nel caricamento delle geofences vietate");
         });
+}
+
+function split(left, right, parts) {
+    var result = [],
+        delta = (right - left) / (parts - 1);
+    while (left < right) {
+        result.push(left);
+        left += delta;
+    }
+    result.push(right);
+    return result;
 }
