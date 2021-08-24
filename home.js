@@ -124,14 +124,15 @@ function doupload() {
 
 
 /**** STORICO TRAGITTI *****/
+
 //Bottone per vedere lo storico dei tragitti
 var btnViewStorico = L.Control.extend({
     onAdd: function () {
-        nascondi = false;
+        let nascondiStorico = false;
         var button = L.DomUtil.create('button', 'Storico');
         button.innerHTML = 'Visualizza storico tragitti';
         L.DomEvent.on(button, 'click', function () {
-            if (!nascondi) {
+            if (!nascondiStorico) {
                 button.innerHTML = 'Nascondi tragitto';
                 $.getScript("./get_storico.js")
                     .done(function (script, textStatus) {
@@ -140,11 +141,11 @@ var btnViewStorico = L.Control.extend({
                     .fail(function (jqxhr, settings, exception) {
                         console.log("Errore nel caricamento storico tragitti");
                     });
-                nascondi = true;
+                nascondiStorico = true;
             } else {
                 button.innerHTML = 'Visualizza storico tragitti';
                 mymap.removeLayer(window.layerStorico);
-                nascondi = false;
+                nascondiStorico = false;
             }
         });
         return button;
@@ -163,20 +164,20 @@ var btnViewBikesRealTime = L.Control.extend({
         // set timeout
         var tid;
 
-        nascondi = false;
+        let nascondiBiciRealTime = false;
         var button = L.DomUtil.create('button', 'Bici tempo reale')
         button.innerHTML = 'Visualizza bici noleggiate in tempo reale';
         L.DomEvent.on(button, 'click', function () {
-            if (!nascondi) {
+            if (!nascondiBiciRealTime) {
                 window.abortLoopBikesRealTime = false;
                 button.innerHTML = 'Nascondi bici noleggiate in tempo reale';
                 tid = setTimeout(getScriptBikeRealTime, 500);
-                nascondi = true;
+                nascondiBiciRealTime = true;
             } else {
                 button.innerHTML = 'Visualizza bici noleggiate in tempo reale';
                 window.abortLoopBikesRealTime = true;
                 mymap.removeLayer(window.layerBiciRealTime);
-                nascondi = false;
+                nascondiBiciRealTime = false;
             }
         });
         return button;
@@ -254,10 +255,10 @@ dialogNumClusters = L.control.dialog(optionsDialogCluster).setContent('<label> N
 //Bottone per avviare il clustering delle bici
 var btnClustering = L.Control.extend({
     onAdd: function () {
-        nascondi = false;   //Variabile per capire se il pulsante è stato attivato o meno
+        let nascondiClustering = false;   //Variabile per capire se il pulsante è stato attivato o meno
         buttonClustering.innerHTML = 'Avvia Clustering';
         L.DomEvent.on(buttonClustering, 'click', function () {
-            if (!nascondi) {
+            if (!nascondiClustering) {
                 //Entriamo qui quando è stato iniziato il clustering
                 buttonClustering.innerHTML = 'Termina clustering';
                 dialogNumClusters.addTo(mymap);             //Aggiungiamo il dialog alla pagina
@@ -265,13 +266,13 @@ var btnClustering = L.Control.extend({
                 dialogNumClusters.freeze();
                 dialogNumClusters.open();
                 buttonClustering.disabled = true;           //Disabilitiamo  il bottone fino a quando non ha messo il numero di cluster
-                nascondi = true;
+                nascondiClustering = true;
             } else {
                 //Entriamo qui quando è stato terminato il clustering
                 buttonClustering.innerHTML = 'Avvia Clustering';
                 mymap.removeLayer(window.clusterKMEANS);    //Togliamo la clusterizzazione dalla mappa
                 window.clusterRastrelliere.addTo(mymap);    //Ri-aggiungiamo le bici alla mappa
-                nascondi = false;
+                nascondiClustering = false;
             }
         });
         return buttonClustering;
@@ -308,11 +309,11 @@ function avviaScriptClustering() {
 /**** INTENSITA' ATTIVAZIONI GEOFENCE *****/
 var btnViewAttivazioni = L.Control.extend({
     onAdd: function () {
-        nascondi = false;
+        let nascondiAttivaz = false;
         var buttonAttivazioni = L.DomUtil.create('button', 'Attivazioni');
         buttonAttivazioni.innerHTML = 'Visualizza intensità attivazioni geofence';
         L.DomEvent.on(buttonAttivazioni, 'click', function () {
-            if (!nascondi) {
+            if (!nascondiAttivaz) {
                 buttonAttivazioni.innerHTML = 'Nascondi intensità attivazioni geofence';
                 $.getScript("./get_intensita_attivazioni.js")
                     .done(function (script, textStatus) {
@@ -321,7 +322,7 @@ var btnViewAttivazioni = L.Control.extend({
                     .fail(function (jqxhr, settings, exception) {
                         console.log("Errore nel caricamento delle attivazioni");
                     });
-                nascondi = true;
+                nascondiAttivaz = true;
             } else {
                 buttonAttivazioni.innerHTML = 'Visualizza intensità attivazioni geofence';
                 vediAttivazioni = false;
@@ -329,7 +330,7 @@ var btnViewAttivazioni = L.Control.extend({
                 mymap.removeLayer(window.geofenceVietate);
                 mymap.removeControl(window.legendGeofence);
                 mymap.removeControl(window.legendGeofenceVietate);
-                nascondi = false;
+                nascondiAttivaz = false;
 
                 $.getScript("./get_geofences.js")
                     .done(function (script, textStatus) {
@@ -359,11 +360,11 @@ var viewAttivazioni = (new btnViewAttivazioni()).addTo(mymap);
 /**** RESET *****/
 var btnReset = L.Control.extend({
     onAdd: function () {
-        nascondi = false;
+        let nascondiReset = false;
         var buttonReset = L.DomUtil.create('button', 'Inizializza');
         buttonReset.innerHTML = 'Resetta database';
         L.DomEvent.on(buttonReset, 'click', function () {
-            if (!nascondi) {
+            if (!nascondiReset) {
                 $.getScript("./inizializza_database.js")
                     .done(function (script, textStatus) {
                         console.log("Inizializzazione database completata");
@@ -371,7 +372,7 @@ var btnReset = L.Control.extend({
                     .fail(function (jqxhr, settings, exception) {
                         console.log("Errore nell\'inizializzazione del database!");
                     });
-                nascondi = true;
+                nascondiReset = true;
                 buttonReset.disabled = true;
             }
         });
