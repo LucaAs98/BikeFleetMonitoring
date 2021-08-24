@@ -214,6 +214,7 @@ var btnSimulazione = L.Control.extend({
     onAdd: function () {
         buttonSimulazione.innerHTML = 'Avvia Simulazione';
         L.DomEvent.on(buttonSimulazione, 'click', function () {
+            disabilitaPulsanti();
             buttonSimulazione.innerHTML = 'Simulazione avviata!';
             $.getScript("./start_simulation.js")
                 .done(function (script, textStatus) {

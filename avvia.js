@@ -186,6 +186,26 @@ app.get("/bici_fuori_range", async (req, res) => {
     }
 })
 
+app.get("/n_rastrelliere", async (req, res)=>{
+    var response = await getNRastrelliere().catch((err) => errore_completo = err);
+
+    if (!response) {
+        console.log('Errore nel conteggio delle rastrelliere!.' + '\n' + errore_completo);
+    } else {
+        res.json(response.rows)
+    }
+})
+
+app.get("/pos_rastr", async (req, res)=>{
+    var response = await getPosRastr(req.query.id).catch((err) => errore_completo = err);
+
+    if (!response) {
+        console.log('Errore nel trovare la poszione della rastrelliera!' + '\n' + errore_completo);
+    } else {
+        res.json(response.rows)
+    }
+})
+
 /*** Richieste POST ***/
 /* Facendo una richiesta "POST" ad URL "/prenota" si effettua il noleggio di una bici con i dati passati al body. */
 app.post("/prenota", (req, res) => {
@@ -196,6 +216,8 @@ app.post("/prenota", (req, res) => {
             console.log('Prenotazione effettuata!');
         }
     });
+
+    res.end();
 });
 
 /* Facendo una richiesta "POST" ad URL "/rastrelliere_marker" si aggiunge tramite disegno una rastrelliera. */
@@ -339,6 +361,8 @@ app.post("/termina_noleggio", async (req, res) => {
         await client.query(query2);
         const query3 = 'INSERT INTO lista_bici_rastrelliera VALUES (' + req.body.rastrelliera + ', ' + req.body.bici + ')'
         await client.query(query3)
+        const query4 = 'UPDATE bicicletta set posizione = rastrelliere.geom from rastrelliere where rastrelliere.id ='+ req.body.rastrelliera+' and bicicletta.id = '+req.body.bici;
+        await client.query(query4)
         await client.query('COMMIT')
     } catch (e) {
         await client.query('ROLLBACK')
@@ -373,7 +397,6 @@ app.post("/popola_rastrelliere", async (req, res) => {
         }
     });
 });
-
 
 app.post("/clustering", async (req, res) => {
     var dataset = req.body;
@@ -453,8 +476,7 @@ function getListaBici(id) {
     return client.query('SELECT bicicletta AS id FROM public.lista_bici_rastrelliera WHERE rastrelliera = ' + id + '' +
         ' and bicicletta not in (select noleggio.bicicletta\n' +
         ' FROM bicicletta, noleggio\n' +
-        ' WHERE noleggio.iniziato = true\n' +
-        ' AND noleggio.bicicletta = bicicletta.id\n' +
+        ' WHERE noleggio.bicicletta = bicicletta.id\n' +
         ' AND codice NOT IN (SELECT noleggio FROM storico)\n' +
         ' )\n' +
         ' order by id;');
@@ -467,7 +489,7 @@ function getPrenotazione(cod_u) {
 function getRastrellieraVicino(longitudine, latitudine) {
 
     return client.query('SELECT a1.id FROM rastrelliere AS A1 WHERE ST_Distance(A1.geom::geography, ST_GeomFromText(' +
-        apice + 'POINT(' + longitudine + ' ' + latitudine + ')' + apice + ')::geography) <= 15 order by ' +
+        apice + 'POINT(' + longitudine + ' ' + latitudine + ')' + apice + ')::geography) <= 75 order by ' +
         'ST_Distance(A1.geom::geography, ST_GeomFromText(' +
         apice + 'POINT(' + longitudine + ' ' + latitudine + ')' + apice + ')::geography)');
 
@@ -502,6 +524,13 @@ function getBiciFuoriRange() {
     )
 }
 
+function getNRastrelliere(){
+    return client.query('select count(*)as n_rastrelliere from rastrelliere;')
+}
+
+function getPosRastr(id) {
+    return client.query('SELECT ST_X(geom) AS long, ST_Y(geom) AS lat FROM rastrelliere WHERE rastrelliere.id = '+id);
+}
 
 // All'avvio apriamo la home con il browser di default.
 open("http://localhost:3000/home");
