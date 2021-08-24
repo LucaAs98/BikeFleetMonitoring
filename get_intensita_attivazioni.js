@@ -79,6 +79,7 @@ async function addIntensitaAttivazioni(data) {
     $.getScript("./get_geofences_vietate.js")
         .done(function (script, textStatus) {
             console.log("Caricamento geofences vietate completato");
+            abilitaPulsanti();
         })
         .fail(function (jqxhr, settings, exception) {
             console.log("Errore nel caricamento delle geofences vietate");

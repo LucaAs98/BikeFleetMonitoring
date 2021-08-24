@@ -83,21 +83,24 @@ $.getScript("./draw.js")
 
 
 /**** RASTRELLIERE DA FILE *****/
+var buttonAddRastrelliereFromFile = L.DomUtil.create('button', 'Aggiungi rastrelliere');
+
+var optionsDialogRastrelliere = {
+    size: [400, 150],
+    minSize: [100, 100],
+    maxSize: [350, 350],
+    anchor: [100, 700],
+    position: "topleft",
+    initOpen: true
+}
+
 //Bottone per aggiungere rastrelliere da file
 var btnAddRastrelliereFromFile = L.Control.extend({
     onAdd: function () {
-        var button = L.DomUtil.create('button', 'Aggiungi rastrelliere');
-        button.innerHTML = 'Aggiungi rastrelliere da file';
-        L.DomEvent.on(button, 'click', function () {
-            var options = {
-                size: [400, 150],
-                minSize: [100, 100],
-                maxSize: [350, 350],
-                anchor: [100, 700],
-                position: "topleft",
-                initOpen: true
-            }
-            var dialog = L.control.dialog(options)
+        buttonAddRastrelliereFromFile.innerHTML = 'Aggiungi rastrelliere da file';
+        L.DomEvent.on(buttonAddRastrelliereFromFile, 'click', function () {
+            disabilitaPulsanti();
+            var dialog = L.control.dialog(optionsDialogRastrelliere)
                 .setContent(
                     '<form enctype="multipart/form-data"  id="formFile" action="/rastrelliere_file" method="POST">' +
                     '<input type="file" name="file" id="file" required>' +
@@ -108,7 +111,7 @@ var btnAddRastrelliereFromFile = L.Control.extend({
             dialog.freeze();
             dialog.open();
         });
-        return button;
+        return buttonAddRastrelliereFromFile;
     }
 });
 
@@ -124,16 +127,16 @@ function doupload() {
 
 
 /**** STORICO TRAGITTI *****/
-
+var buttonViewStorico = L.DomUtil.create('button', 'Storico');
 //Bottone per vedere lo storico dei tragitti
 var btnViewStorico = L.Control.extend({
     onAdd: function () {
         let nascondiStorico = false;
-        var button = L.DomUtil.create('button', 'Storico');
-        button.innerHTML = 'Visualizza storico tragitti';
-        L.DomEvent.on(button, 'click', function () {
+        buttonViewStorico.innerHTML = 'Visualizza storico tragitti';
+        L.DomEvent.on(buttonViewStorico, 'click', function () {
             if (!nascondiStorico) {
-                button.innerHTML = 'Nascondi tragitto';
+                disabilitaPulsanti();
+                buttonViewStorico.innerHTML = 'Nascondi tragitto';
                 $.getScript("./get_storico.js")
                     .done(function (script, textStatus) {
                         console.log("Caricamento storico completato");
@@ -143,12 +146,12 @@ var btnViewStorico = L.Control.extend({
                     });
                 nascondiStorico = true;
             } else {
-                button.innerHTML = 'Visualizza storico tragitti';
+                buttonViewStorico.innerHTML = 'Visualizza storico tragitti';
                 mymap.removeLayer(window.layerStorico);
                 nascondiStorico = false;
             }
         });
-        return button;
+        return buttonViewStorico;
     }
 });
 
@@ -157,30 +160,27 @@ var viewStorico = (new btnViewStorico()).addTo(mymap);
 
 /**** BICI REAL-TIME *****/
 window.abortLoopBikesRealTime = false;
-
+var buttonViewBikesRealTime = L.DomUtil.create('button', 'Bici tempo reale');
 //Bottone per vedere gli utenti in real time
 var btnViewBikesRealTime = L.Control.extend({
     onAdd: function () {
-        // set timeout
         var tid;
-
         let nascondiBiciRealTime = false;
-        var button = L.DomUtil.create('button', 'Bici tempo reale')
-        button.innerHTML = 'Visualizza bici noleggiate in tempo reale';
-        L.DomEvent.on(button, 'click', function () {
+        buttonViewBikesRealTime.innerHTML = 'Visualizza bici noleggiate in tempo reale';
+        L.DomEvent.on(buttonViewBikesRealTime, 'click', function () {
             if (!nascondiBiciRealTime) {
                 window.abortLoopBikesRealTime = false;
-                button.innerHTML = 'Nascondi bici noleggiate in tempo reale';
+                buttonViewBikesRealTime.innerHTML = 'Nascondi bici noleggiate in tempo reale';
                 tid = setTimeout(getScriptBikeRealTime, 500);
                 nascondiBiciRealTime = true;
             } else {
-                button.innerHTML = 'Visualizza bici noleggiate in tempo reale';
+                buttonViewBikesRealTime.innerHTML = 'Visualizza bici noleggiate in tempo reale';
                 window.abortLoopBikesRealTime = true;
                 mymap.removeLayer(window.layerBiciRealTime);
                 nascondiBiciRealTime = false;
             }
         });
-        return button;
+        return buttonViewBikesRealTime;
     }
 });
 
@@ -212,7 +212,6 @@ var buttonSimulazione = L.DomUtil.create('button', 'Simulazione');
 //Bottone per avviare la simulazione
 var btnSimulazione = L.Control.extend({
     onAdd: function () {
-        var buttonSimulazione = L.DomUtil.create('button', 'Simulazione');
         buttonSimulazione.innerHTML = 'Avvia Simulazione';
         L.DomEvent.on(buttonSimulazione, 'click', function () {
             buttonSimulazione.innerHTML = 'Simulazione avviata!';
@@ -289,6 +288,7 @@ function avviaScriptClustering() {
     if (document.getElementById('number_cluster').value > maxCluster) {
         alert("Non puoi inserire una suddivisione in cluster maggiore di " + maxCluster + "!");
     } else {
+        disabilitaPulsanti();
         //Rimuoviamo il dialog
         dialogNumClusters.remove();
         mymap.removeLayer(dialogNumClusters);
@@ -307,14 +307,15 @@ function avviaScriptClustering() {
 
 
 /**** INTENSITA' ATTIVAZIONI GEOFENCE *****/
+var buttonAttivazioni = L.DomUtil.create('button', 'Attivazioni');
 var btnViewAttivazioni = L.Control.extend({
     onAdd: function () {
         let nascondiAttivaz = false;
-        var buttonAttivazioni = L.DomUtil.create('button', 'Attivazioni');
         buttonAttivazioni.innerHTML = 'Visualizza intensità attivazioni geofence';
         L.DomEvent.on(buttonAttivazioni, 'click', function () {
             if (!nascondiAttivaz) {
                 buttonAttivazioni.innerHTML = 'Nascondi intensità attivazioni geofence';
+                disabilitaPulsanti();
                 $.getScript("./get_intensita_attivazioni.js")
                     .done(function (script, textStatus) {
                         console.log("Caricamento attivazioni completato");
@@ -358,13 +359,14 @@ var viewAttivazioni = (new btnViewAttivazioni()).addTo(mymap);
 
 
 /**** RESET *****/
+var buttonReset = L.DomUtil.create('button', 'Inizializza');
 var btnReset = L.Control.extend({
     onAdd: function () {
         let nascondiReset = false;
-        var buttonReset = L.DomUtil.create('button', 'Inizializza');
         buttonReset.innerHTML = 'Resetta database';
         L.DomEvent.on(buttonReset, 'click', function () {
             if (!nascondiReset) {
+                disabilitaPulsanti();
                 $.getScript("./inizializza_database.js")
                     .done(function (script, textStatus) {
                         console.log("Inizializzazione database completata");
@@ -381,3 +383,23 @@ var btnReset = L.Control.extend({
 });
 
 var inizializza = (new btnReset()).addTo(mymap);
+
+function disabilitaPulsanti() {
+    buttonReset.disabled = true;
+    buttonAttivazioni.disabled = true;
+    buttonClustering.disabled = true;
+    buttonSimulazione.disabled = true;
+    buttonViewBikesRealTime.disabled = true;
+    buttonViewStorico.disabled = true;
+    buttonAddRastrelliereFromFile.disabled = true;
+}
+
+function abilitaPulsanti() {
+    buttonReset.disabled = false;
+    buttonAttivazioni.disabled = false;
+    buttonClustering.disabled = false;
+    buttonSimulazione.disabled = false;
+    buttonViewBikesRealTime.disabled = false;
+    buttonViewStorico.disabled = false;
+    buttonAddRastrelliereFromFile.disabled = false;
+}

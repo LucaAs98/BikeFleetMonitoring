@@ -133,4 +133,6 @@ async function getClustering() {
             });
         },
     }).addTo(mymap);
+
+    abilitaPulsanti();
 }

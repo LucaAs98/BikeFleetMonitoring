@@ -27,4 +27,6 @@ function addStorico(data) {
 
     window.layerStorico = L.geoJson(geoJson);
     window.layerStorico.addTo(mymap);
+
+    abilitaPulsanti();
 }

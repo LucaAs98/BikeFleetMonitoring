@@ -38,4 +38,5 @@ async function inizializzaDatabase() {
             });
         }
     }
+    abilitaPulsanti();
 }
