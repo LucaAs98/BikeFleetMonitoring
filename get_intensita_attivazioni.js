@@ -64,8 +64,19 @@ async function addIntensitaAttivazioni(data) {
     mymap.removeLayer(window.geofence);
     mymap.removeLayer(window.geofenceVietate);
 
-    let max = Math.max.apply(null, Object.values(window.attivazioniGeofence).map(item => item.attivazioni));
-    window.rangeArray = split(0, max, 6);
+    let valuesGeoNormali = [];
+    let valuesGeoVietate = [];
+    for (let value of Object.values(window.attivazioniGeofence)) {
+        if (value.vietata === 'False') {
+            valuesGeoNormali.push(value);
+        } else {
+            valuesGeoVietate.push(value);
+        }
+    }
+    let maxGeof = Math.max.apply(null, valuesGeoNormali.map(item => item.attivazioni));
+    let maxGeofViet = Math.max.apply(null, valuesGeoVietate.map(item => item.attivazioni));
+    window.rangeArrayNormale = split(0, maxGeof, 6);
+    window.rangeArrayVietato = split(0, maxGeofViet, 6);
 
     $.getScript("./get_geofences.js")
         .done(function (script, textStatus) {

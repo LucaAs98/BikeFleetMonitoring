@@ -31,12 +31,12 @@ async function addGeofences(data) {
     }).addTo(mymap);
 
     function getColorGeofences(d) {
-        return d >= rangeArray[5] ? '#00a100' :
-            d >= rangeArray[4] ? '#47b64c' :
-                d >= rangeArray[3] ? '#6ecb7f' :
-                    d >= rangeArray[2] ? '#93dfb0' :
-                        d >= rangeArray[1] ? '#bdf2dd' :
-                            d >= rangeArray[0] ? '#ffffff' :
+        return d >= rangeArrayNormale[5] ? '#00a100' :
+            d >= rangeArrayNormale[4] ? '#47b64c' :
+                d >= rangeArrayNormale[3] ? '#6ecb7f' :
+                    d >= rangeArrayNormale[2] ? '#93dfb0' :
+                        d >= rangeArrayNormale[1] ? '#bdf2dd' :
+                            d >= rangeArrayNormale[0] ? '#ffffff' :
                                 '#000000';
     }
 
@@ -67,14 +67,20 @@ async function addGeofences(data) {
 
         window.legendGeofence.onAdd = function () {
             var div = L.DomUtil.create('div', 'info legend'),
-                grades = rangeArray,
+                grades = rangeArrayNormale,
                 labels = [];
+
+            for (let i in grades) {
+                if (Math.trunc(grades[i]) - grades[i] < 0) {
+                    grades[i] = Math.trunc(grades[i]) + 1;
+                }
+            }
 
             div.innerHTML = '<p>Attivazioni geofence normali</p>';
             for (var i = 0; i < grades.length; i++) {
                 div.innerHTML +=
                     '<i style="background:' + getColorGeofences(grades[i] + 1) + '"></i> ' +
-                    grades[i].toFixed(2) + (grades[i + 1] ? '&ndash;' + grades[i + 1].toFixed(2) + '<br>' : '+');
+                    grades[i] + (grades[i + 1] ? ' &ndash; ' + grades[i + 1] + '<br>' : ' +');
             }
             return div;
         };

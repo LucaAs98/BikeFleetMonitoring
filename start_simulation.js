@@ -1,117 +1,8 @@
+let velocitaSimulazione = 500;
+
 avvia();
 
 async function avvia() {
-
-    function randomString(length, chars) {
-        let result = '';
-        for (let i = length; i > 0; --i) result += chars[Math.floor(Math.random() * chars.length)];
-        return result;
-    }
-
-    function random_number(min, max) {
-        return Math.floor(Math.random() * (max - min + 1) + min);
-    }
-
-    async function getRastrellieraEBici() {
-        let flagWhile = true;
-        let ids = {
-            idBici: -1,
-            idRastr: -1
-        }
-
-        while (flagWhile) {
-            const responseNRastrelliere = await fetch('/n_rastrelliere', {
-                method: 'GET',
-            });
-            const jsonNRastrelliere = await responseNRastrelliere.json();
-            ids.idRastr = random_number(1, jsonNRastrelliere[0].n_rastrelliere);
-
-            const responseListaBici = await fetch('/lista_bici?id=' + ids.idRastr, {
-                method: 'GET',
-            });
-            const jsonListaBici = await responseListaBici.json();
-
-            if (jsonListaBici !== undefined && jsonListaBici.length > 0) {
-                ids.idBici = jsonListaBici[random_number(0, jsonListaBici.length - 1)].id;
-                flagWhile = false;
-            }
-        }
-
-        return ids;
-    }
-
-    async function prenotaUtente(user) {
-
-        let ids = await getRastrellieraEBici();
-        let prenotazione = {
-            di: "2021-08-11 11:05:00",
-            df: "2021-08-11 11:05:00",
-            utente: user.username,
-            bici: ids.idBici,
-            cod: randomString(10, '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'),
-            ras: ids.idRastr,
-            geom: "",
-            maxSalti: random_number(5, 5)
-        }
-
-        user.prenotazione = prenotazione;
-
-        formBody = [];
-        for (let property in prenotazione) {
-            let encodedKey = encodeURIComponent(property);
-            let encodedValue = encodeURIComponent(prenotazione[property]);
-            formBody.push(encodedKey + "=" + encodedValue);
-        }
-        formBody = formBody.join("&");
-
-        fetch('/prenota', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded'
-            },
-            body: formBody,
-        });
-    }
-
-    async function startNoleggio(user) {
-        let noleggio = {
-            codNoleggio: user.prenotazione.cod,
-        }
-
-        formBody = [];
-        for (let property in noleggio) {
-
-            let encodedKey = encodeURIComponent(property);
-            let encodedValue = encodeURIComponent(noleggio[property]);
-            formBody.push(encodedKey + "=" + encodedValue);
-        }
-        formBody = formBody.join("&");
-
-        await fetch('/avvia_noleggio', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded'
-            },
-            body: formBody,
-        });
-    }
-
-    //controlla se la terminazione è possibile. Se lo è, effettua la terminazione del noleggio
-    async function controlloTerminazione(user) {
-        //se la posizione finale non è vicino a una rastrelliera, lo spostamento continua
-        const response = await fetch('/checkDistance?lat=' + user.terminazione.coordinate.lat + '&lng=' + user.terminazione.coordinate.long, {
-            method: 'GET',
-        });
-        const data = await response.json();
-        let id;
-
-        if (data[0] !== undefined) {
-            id = data[0].id;
-            user.terminazione.terminato = true;
-            await terminaNoleggio(id, user);
-        }
-    }
-
     let arrUtenti = [];
     let formBody = [];
     let maxUtenti = 2;
@@ -137,20 +28,21 @@ async function avvia() {
     });
     const jsonUtenti = await responseUtenti.json();
 
-    let flag;
+    let flagRegistrazione;
+
     /*Inserimento nel database degli utenti se*/
     for (const user of arrUtenti) {
-        flag = true;
+        flagRegistrazione = true;
 
         if (jsonUtenti !== undefined && jsonUtenti.length > 0) {
-            for (let u = 0; u < jsonUtenti.length && flag; u++) {
+            for (let u = 0; u < jsonUtenti.length && flagRegistrazione; u++) {
                 if (jsonUtenti[u].username === user.username) {
-                    flag = false;
+                    flagRegistrazione = false;
                 }
             }
         }
 
-        if (flag || (jsonUtenti !== undefined && jsonUtenti.length === 0)) {
+        if (flagRegistrazione || (jsonUtenti !== undefined && jsonUtenti.length === 0)) {
             formBody = [];
             for (let property in user) {
                 let encodedKey = encodeURIComponent(property);
@@ -175,13 +67,7 @@ async function avvia() {
         await startNoleggio(user1);
     }
 
-    /* Mandiamo le posizioni in tempo reale. Successivamente  (a posizioni finite) terminiamo il noleggio. */
-    let i = 0;
-    let x0 = 11.343083149519329; //longitudine centro
-    let y0 = 44.501726198465064; //latitudine centro
-    let rd = 1300 / 111300;
-
-    sendPositions();
+    await sendPositions();
 
     async function sendPositions() {
         let conTerminati = 0;
@@ -205,17 +91,11 @@ async function avvia() {
                     long = jsonPosRastr[0].long;
 
                 } else {
+                    let coordinate = calcoloCoordinate();
                     //calcolo coordinate random
-                    let u = Math.random();
-                    let v = Math.random();
 
-                    let w = rd * Math.sqrt(u)
-                    let t = 2 * Math.PI * v
-                    let x = w * Math.cos(t)
-                    let y = w * Math.sin(t)
-
-                    long = (x / Math.cos(y0)) + x0;
-                    lat = y + y0;
+                    long = coordinate[0];
+                    lat = coordinate[1];
 
                 }
 
@@ -256,60 +136,187 @@ async function avvia() {
                 if (user.prenotazione.maxSalti <= 0) {
                     await controlloTerminazione(user);
                 }
-            }
-            else{
+            } else {
                 conTerminati++;
             }
         }
 
         if (conTerminati < maxUtenti) {
-            setTimeout(sendPositions, 1000);
+            setTimeout(sendPositions, velocitaSimulazione);
         } else {
             abilitaPulsanti();
         }
+    }
+}
 
+
+function randomString(length, chars) {
+    let result = '';
+    for (let i = length; i > 0; --i) result += chars[Math.floor(Math.random() * chars.length)];
+    return result;
+}
+
+function random_number(min, max) {
+    return Math.floor(Math.random() * (max - min + 1) + min);
+}
+
+async function getRastrellieraEBici() {
+    let flagWhile = true;
+    let ids = {
+        idBici: -1,
+        idRastr: -1
     }
 
-    /* Faccio terminare il noleggio. */
-    async function terminaNoleggio(id, user) {
-
-        let noleggioTerminato = {
-            codNoleggio: user.prenotazione.cod,
-            bici: user.prenotazione.bici,
-            geom: "[" + user.prenotazione.geom + "]",
-            rastrelliera: id
-        }
-
-        formBody = [];
-        for (let property in noleggioTerminato) {
-            let encodedKey = encodeURIComponent(property);
-            let encodedValue = encodeURIComponent(noleggioTerminato[property]);
-            formBody.push(encodedKey + "=" + encodedValue);
-        }
-        formBody = formBody.join("&");
-
-        await fetch('/termina_noleggio', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded'
-            },
-            body: formBody,
+    while (flagWhile) {
+        const responseNRastrelliere = await fetch('/n_rastrelliere', {
+            method: 'GET',
         });
+        const jsonNRastrelliere = await responseNRastrelliere.json();
+        ids.idRastr = random_number(1, jsonNRastrelliere[0].n_rastrelliere);
 
-        user.nEsecuzioni -= 1;
-        if (user.nEsecuzioni > 0) {
+        const responseListaBici = await fetch('/lista_bici?id=' + ids.idRastr, {
+            method: 'GET',
+        });
+        const jsonListaBici = await responseListaBici.json();
 
-            user.prenotazione = {};
-            user.terminazione = {
-                coordinate: {},
-                terminato: false
-            };
-
-            await prenotaUtente(user);
-            await startNoleggio(user);
+        if (jsonListaBici !== undefined && jsonListaBici.length > 0) {
+            ids.idBici = jsonListaBici[random_number(0, jsonListaBici.length - 1)].id;
+            flagWhile = false;
         }
-
-
     }
 
+    return ids;
+}
+
+async function prenotaUtente(user) {
+
+    let ids = await getRastrellieraEBici();
+    let prenotazione = {
+        di: "2021-08-11 11:05:00",
+        df: "2021-08-11 11:05:00",
+        utente: user.username,
+        bici: ids.idBici,
+        cod: randomString(10, '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'),
+        ras: ids.idRastr,
+        geom: "",
+        maxSalti: random_number(5, 5)
+    }
+
+    user.prenotazione = prenotazione;
+
+    formBody = [];
+    for (let property in prenotazione) {
+        let encodedKey = encodeURIComponent(property);
+        let encodedValue = encodeURIComponent(prenotazione[property]);
+        formBody.push(encodedKey + "=" + encodedValue);
+    }
+    formBody = formBody.join("&");
+
+    fetch('/prenota', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: formBody,
+    });
+}
+
+async function startNoleggio(user) {
+    let noleggio = {
+        codNoleggio: user.prenotazione.cod,
+    }
+
+    formBody = [];
+    for (let property in noleggio) {
+
+        let encodedKey = encodeURIComponent(property);
+        let encodedValue = encodeURIComponent(noleggio[property]);
+        formBody.push(encodedKey + "=" + encodedValue);
+    }
+    formBody = formBody.join("&");
+
+    await fetch('/avvia_noleggio', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: formBody,
+    });
+}
+
+//controlla se la terminazione è possibile. Se lo è, effettua la terminazione del noleggio
+async function controlloTerminazione(user) {
+    //se la posizione finale non è vicino a una rastrelliera, lo spostamento continua
+    const response = await fetch('/checkDistance?lat=' + user.terminazione.coordinate.lat + '&lng=' + user.terminazione.coordinate.long, {
+        method: 'GET',
+    });
+    const data = await response.json();
+    let id;
+
+    if (data[0] !== undefined) {
+        id = data[0].id;
+        user.terminazione.terminato = true;
+        await terminaNoleggio(id, user);
+    }
+}
+
+/* Faccio terminare il noleggio. */
+async function terminaNoleggio(id, user) {
+
+    let noleggioTerminato = {
+        codNoleggio: user.prenotazione.cod,
+        bici: user.prenotazione.bici,
+        geom: "[" + user.prenotazione.geom + "]",
+        rastrelliera: id
+    }
+
+    formBody = [];
+    for (let property in noleggioTerminato) {
+        let encodedKey = encodeURIComponent(property);
+        let encodedValue = encodeURIComponent(noleggioTerminato[property]);
+        formBody.push(encodedKey + "=" + encodedValue);
+    }
+    formBody = formBody.join("&");
+
+    await fetch('/termina_noleggio', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: formBody,
+    });
+
+    user.nEsecuzioni -= 1;
+    if (user.nEsecuzioni > 0) {
+
+        user.prenotazione = {};
+        user.terminazione = {
+            coordinate: {},
+            terminato: false
+        };
+
+        await prenotaUtente(user);
+        await startNoleggio(user);
+    }
+
+
+}
+
+function calcoloCoordinate() {
+    let x0 = 11.341967582702637; //longitudine centro
+    let y0 = 44.49518903364097; //latitudine centro
+    let rd = 1500 / 111300;
+
+    let u = Math.random();
+    let v = Math.random();
+
+    let w = rd * Math.sqrt(u)
+    let t = 2 * Math.PI * v
+    let x = w * Math.cos(t)
+    let y = w * Math.sin(t)
+
+    let long = (x / Math.cos(y0)) + x0;
+    let lat = y + y0;
+
+    return [long, lat];
 }

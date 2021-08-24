@@ -32,12 +32,12 @@ function addGeofencesVietate(data) {
     }).addTo(mymap);
 
     function getColorGeofences(d) {
-        return d >= rangeArray[5] ? '#b90000' :
-            d >= rangeArray[4] ? '#d2413d' :
-                d >= rangeArray[3] ? '#e76a72' :
-                    d >= rangeArray[2] ? '#f692a6' :
-                        d >= rangeArray[1] ? '#febad7' :
-                            d >= rangeArray[0] ? '#ffe4ff' :
+        return d >= rangeArrayVietato[5] ? '#b90000' :
+            d >= rangeArrayVietato[4] ? '#d2413d' :
+                d >= rangeArrayVietato[3] ? '#e76a72' :
+                    d >= rangeArrayVietato[2] ? '#f692a6' :
+                        d >= rangeArrayVietato[1] ? '#febad7' :
+                            d >= rangeArrayVietato[0] ? '#ffe4ff' :
                                 '#000000';
     }
 
@@ -68,15 +68,23 @@ function addGeofencesVietate(data) {
 
         window.legendGeofenceVietate.onAdd = function () {
             var div = L.DomUtil.create('div', 'info legend'),
-                grades = rangeArray,
+                grades = rangeArrayVietato,
                 labels = [];
 
             div.innerHTML = '<p>Attivazioni geofence vietate:</p>'
+
+
+            for (let i in grades) {
+                if (Math.trunc(grades[i]) - grades[i] < 0) {
+                    grades[i] = Math.trunc(grades[i]) + 1;
+                }
+            }
+
             // loop through our density intervals and generate a label with a colored square for each interval
             for (var i = 0; i < grades.length; i++) {
                 div.innerHTML +=
                     '<i style="background:' + getColorGeofences(grades[i] + 1) + '"></i> ' +
-                    grades[i].toFixed(2) + (grades[i + 1] ? '&ndash;' + grades[i + 1].toFixed(2) + '<br>' : '+');
+                    grades[i] + (grades[i + 1] ? ' &ndash; ' + grades[i + 1] + '<br>' : ' +');
             }
             return div;
         };
