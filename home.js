@@ -389,7 +389,6 @@ function disabilitaPulsanti() {
     buttonAttivazioni.disabled = true;
     buttonClustering.disabled = true;
     buttonSimulazione.disabled = true;
-    buttonViewBikesRealTime.disabled = true;
     buttonViewStorico.disabled = true;
     buttonAddRastrelliereFromFile.disabled = true;
 }
@@ -399,7 +398,6 @@ function abilitaPulsanti() {
     buttonAttivazioni.disabled = false;
     buttonClustering.disabled = false;
     buttonSimulazione.disabled = false;
-    buttonViewBikesRealTime.disabled = false;
     buttonViewStorico.disabled = false;
     buttonAddRastrelliereFromFile.disabled = false;
 }
