@@ -1,7 +1,7 @@
 var jsonFeatures = [];
 let storicoEDati = [];
-let storicoLayerAttivi = [];
-let storicoLayerPointsAttivi = [];
+window.storicoLayerAttivi = [];
+window.storicoLayerPointsAttivi = [];
 
 var startIcon = L.icon({
     iconUrl: 'icons/iconStart.svg',
@@ -71,8 +71,6 @@ async function addStorico(datiStorico) {
 
         sidebar.setContent(contentSidebar);
     }
-
-    abilitaPulsanti();
 }
 
 async function visualizzaStorico(codice, indice) {
@@ -134,8 +132,8 @@ async function visualizzaStorico(codice, indice) {
         };
 
         htmlButton.textContent = "Nascondi storico";
-        storicoLayerAttivi.push(layer);
-        storicoLayerPointsAttivi.push(layerPoints)
+        window.storicoLayerAttivi.push(layer);
+        window.storicoLayerPointsAttivi.push(layerPoints)
         storicoEDati.push(featuresGeoJson[0]);
         window.layerStorico.addTo(mymap);
         window.pointStorico.addTo(mymap);
@@ -151,8 +149,8 @@ function rimuoviLayer(layer, codice, indice, layerPoints) {
         htmlButton.textContent = "Visualizza storico";
 
         storicoEDati = storicoEDati.filter(elem => elem.properties.codice !== codice);
-        storicoLayerAttivi = storicoLayerAttivi.filter(elem => elem !== layer);
-        storicoLayerPointsAttivi = storicoLayerPointsAttivi.filter(elem => elem !== layerPoints);
+        window.storicoLayerAttivi = window.storicoLayerAttivi.filter(elem => elem !== layer);
+        window.storicoLayerPointsAttivi = window.storicoLayerPointsAttivi.filter(elem => elem !== layerPoints);
         mymap.removeLayer(layer);
         mymap.removeLayer(layerPoints);
     }
@@ -161,7 +159,7 @@ function rimuoviLayer(layer, codice, indice, layerPoints) {
 function pulisciStorici() {
     let indiceFeature = 0;
     for (let feature of jsonFeatures) {
-        rimuoviLayer(storicoLayerAttivi[0], feature.properties.codice, indiceFeature, storicoLayerPointsAttivi[0]);
+        rimuoviLayer(window.storicoLayerAttivi[0], feature.properties.codice, indiceFeature, window.storicoLayerPointsAttivi[0]);
         indiceFeature++;
     }
 }

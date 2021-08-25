@@ -155,8 +155,20 @@ var btnViewStorico = L.Control.extend({
                 nascondiStorico = true;
             } else {
                 buttonViewStorico.innerHTML = 'Visualizza storico tragitti';
-                /*mymap.removeLayer(window.storicoLayerAttivi);
-                mymap.removeLayer(window.storicoLayerPointsAttivi);*/
+
+                setTimeout(function () {
+                    sidebar.hide();
+                }, 0);
+
+                for (let item of window.storicoLayerAttivi) {
+                    mymap.removeLayer(item);
+                }
+
+                for (let item of window.storicoLayerPointsAttivi) {
+                    mymap.removeLayer(item);
+                }
+
+
                 window.clusterRastrelliere.addTo(mymap);
                 nascondiStorico = false;
             }
