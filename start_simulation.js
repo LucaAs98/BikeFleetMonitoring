@@ -150,12 +150,14 @@ async function avvia() {
 }
 
 
+//Crea il codice per il noleggio
 function randomString(length, chars) {
     let result = '';
     for (let i = length; i > 0; --i) result += chars[Math.floor(Math.random() * chars.length)];
     return result;
 }
 
+//Crea un numero random tra min e max
 function random_number(min, max) {
     return Math.floor(Math.random() * (max - min + 1) + min);
 }
@@ -244,7 +246,7 @@ async function startNoleggio(user) {
     });
 }
 
-//controlla se la terminazione è possibile. Se lo è, effettua la terminazione del noleggio
+//Controlla se la terminazione è possibile. Se lo è, effettua la terminazione del noleggio
 async function controlloTerminazione(user) {
     //se la posizione finale non è vicino a una rastrelliera, lo spostamento continua
     const response = await fetch('/checkDistance?lat=' + user.terminazione.coordinate.lat + '&lng=' + user.terminazione.coordinate.long, {

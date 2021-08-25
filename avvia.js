@@ -186,7 +186,7 @@ app.get("/bici_fuori_range", async (req, res) => {
     }
 })
 
-app.get("/n_rastrelliere", async (req, res)=>{
+app.get("/n_rastrelliere", async (req, res) => {
     var response = await getNRastrelliere().catch((err) => errore_completo = err);
 
     if (!response) {
@@ -196,7 +196,7 @@ app.get("/n_rastrelliere", async (req, res)=>{
     }
 })
 
-app.get("/pos_rastr", async (req, res)=>{
+app.get("/pos_rastr", async (req, res) => {
     var response = await getPosRastr(req.query.id).catch((err) => errore_completo = err);
 
     if (!response) {
@@ -206,18 +206,30 @@ app.get("/pos_rastr", async (req, res)=>{
     }
 })
 
+app.get("/get_dati_noleggio", async (req, res) => {
+    var response = await getDatiNoleggio(req.query.codice_noleggio).catch((err) => errore_completo = err);
+
+    if (!response) {
+        console.log('Errore nel trovare i dati del noleggio! ' + '\n' + errore_completo);
+    } else {
+        res.json(response.rows)
+    }
+})
+
 /*** Richieste POST ***/
 /* Facendo una richiesta "POST" ad URL "/prenota" si effettua il noleggio di una bici con i dati passati al body. */
 app.post("/prenota", (req, res) => {
-    client.query('INSERT INTO noleggio(codice, bicicletta, utente, data_inizio, data_fine, iniziato, rastrelliera) VALUES(' + apice + req.body.cod + apice + ',' + req.body.bici + ',' + apice + req.body.utente + apice + ',' + apice + req.body.di + apice + ',' + apice + req.body.df + apice + ',' + false + ',' + req.body.ras + ')', (err, result) => {
-        if (err) {
-            console.log('Errore durante la prenotazione!' + err);
-        } else {
-            console.log('Prenotazione effettuata!');
-        }
-    });
+    app.post("/prenota", (req, res) => {
+        client.query('INSERT INTO noleggio(codice, bicicletta, utente, data_inizio, iniziato, rastrelliera) VALUES(' + apice + req.body.cod + apice + ',' + req.body.bici + ',' + apice + req.body.utente + apice + ',' + apice + req.body.di + apice + ',' + false + ',' + req.body.ras + ')', (err, result) => {
+            if (err) {
+                console.log('Errore durante la prenotazione!' + err);
+            } else {
+                console.log('Prenotazione effettuata!');
+            }
+        });
 
-    res.end();
+        res.end();
+    });
 });
 
 /* Facendo una richiesta "POST" ad URL "/rastrelliere_marker" si aggiunge tramite disegno una rastrelliera. */
@@ -361,8 +373,10 @@ app.post("/termina_noleggio", async (req, res) => {
         await client.query(query2);
         const query3 = 'INSERT INTO lista_bici_rastrelliera VALUES (' + req.body.rastrelliera + ', ' + req.body.bici + ')'
         await client.query(query3)
-        const query4 = 'UPDATE bicicletta set posizione = rastrelliere.geom from rastrelliere where rastrelliere.id ='+ req.body.rastrelliera+' and bicicletta.id = '+req.body.bici;
+        const query4 = 'UPDATE bicicletta set posizione = rastrelliere.geom from rastrelliere where rastrelliere.id =' + req.body.rastrelliera + ' and bicicletta.id = ' + req.body.bici;
         await client.query(query4)
+        const query5 = 'UPDATE noleggio set data_fine = ' + apice + req.body.df + apice + ' where noleggio.codice = ' + apice + req.body.codNoleggio + apice + ';'
+        await client.query(query5)
         await client.query('COMMIT')
     } catch (e) {
         await client.query('ROLLBACK')
@@ -506,7 +520,7 @@ function getIntersezioneGeofence(longitudine, latitudine) {
 }
 
 function getStorico() {
-    return client.query('SELECT ST_AsGeoJSON(traiettoria) AS geometry FROM storico');
+    return client.query('SELECT ST_AsGeoJSON(traiettoria) AS geometry,  noleggio AS codice FROM storico');
 }
 
 function getBiciRealTime() {
@@ -524,12 +538,16 @@ function getBiciFuoriRange() {
     )
 }
 
-function getNRastrelliere(){
+function getNRastrelliere() {
     return client.query('select count(*)as n_rastrelliere from rastrelliere;')
 }
 
 function getPosRastr(id) {
-    return client.query('SELECT ST_X(geom) AS long, ST_Y(geom) AS lat FROM rastrelliere WHERE rastrelliere.id = '+id);
+    return client.query('SELECT ST_X(geom) AS long, ST_Y(geom) AS lat FROM rastrelliere WHERE rastrelliere.id = ' + id);
+}
+
+function getDatiNoleggio(codiceNoleggio) {
+    return client.query('SELECT bicicletta, utente, data_inizio FROM noleggio WHERE codice =' + apice + codiceNoleggio + apice + '   ORDER BY data_inizio');
 }
 
 // All'avvio apriamo la home con il browser di default.

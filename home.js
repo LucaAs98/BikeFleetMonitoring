@@ -45,6 +45,12 @@ L.control.layers(baseMaps).addTo(mymap);
 
 var geofenceData, geofenceVietateData;
 
+var sidebar = L.control.sidebar('sidebar', {
+    position: 'left'
+});
+
+mymap.addControl(sidebar);
+
 /**** CARICA RASRELLIERE *****/
 $.getScript("./get_rastrelliere.js")
     .done(function (script, textStatus) {
@@ -99,7 +105,6 @@ var btnAddRastrelliereFromFile = L.Control.extend({
     onAdd: function () {
         buttonAddRastrelliereFromFile.innerHTML = 'Aggiungi rastrelliere da file';
         L.DomEvent.on(buttonAddRastrelliereFromFile, 'click', function () {
-            disabilitaPulsanti();
             var dialog = L.control.dialog(optionsDialogRastrelliere)
                 .setContent(
                     '<form enctype="multipart/form-data"  id="formFile" action="/rastrelliere_file" method="POST">' +
@@ -135,7 +140,10 @@ var btnViewStorico = L.Control.extend({
         buttonViewStorico.innerHTML = 'Visualizza storico tragitti';
         L.DomEvent.on(buttonViewStorico, 'click', function () {
             if (!nascondiStorico) {
-                disabilitaPulsanti();
+                mymap.removeLayer(window.clusterRastrelliere);
+                setTimeout(function () {
+                    sidebar.show();
+                }, 0);
                 buttonViewStorico.innerHTML = 'Nascondi tragitto';
                 $.getScript("./get_storico.js")
                     .done(function (script, textStatus) {
@@ -147,7 +155,9 @@ var btnViewStorico = L.Control.extend({
                 nascondiStorico = true;
             } else {
                 buttonViewStorico.innerHTML = 'Visualizza storico tragitti';
-                mymap.removeLayer(window.layerStorico);
+                /*mymap.removeLayer(window.storicoLayerAttivi);
+                mymap.removeLayer(window.storicoLayerPointsAttivi);*/
+                window.clusterRastrelliere.addTo(mymap);
                 nascondiStorico = false;
             }
         });
