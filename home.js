@@ -140,7 +140,10 @@ var btnViewStorico = L.Control.extend({
         buttonViewStorico.innerHTML = 'Visualizza storico tragitti';
         L.DomEvent.on(buttonViewStorico, 'click', function () {
             if (!nascondiStorico) {
+                //Rimuoviamo le rastrelliere dalla mappa
                 mymap.removeLayer(window.clusterRastrelliere);
+
+                //Mostriamo la sidebar sulla mappa
                 setTimeout(function () {
                     sidebar.show();
                 }, 0);
@@ -156,6 +159,7 @@ var btnViewStorico = L.Control.extend({
             } else {
                 buttonViewStorico.innerHTML = 'Visualizza storico tragitti';
 
+                //Nascondiamo la sidebar e rimuoviamo tutti i layer presenti sulla mappa
                 setTimeout(function () {
                     sidebar.hide();
                 }, 0);
@@ -168,8 +172,12 @@ var btnViewStorico = L.Control.extend({
                     mymap.removeLayer(item);
                 }
 
+                if (window.heatmapLayer !== undefined)
+                    mymap.removeLayer(window.heatmapLayer);
 
+                //Aggiungiamo nuovamente le rastrelliere alla mappa
                 window.clusterRastrelliere.addTo(mymap);
+
                 nascondiStorico = false;
             }
         });
