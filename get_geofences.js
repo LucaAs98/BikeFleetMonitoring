@@ -67,8 +67,7 @@ async function addGeofences(data) {
 
         window.legendGeofence.onAdd = function () {
             var div = L.DomUtil.create('div', 'info legend'),
-                grades = rangeArrayNormale,
-                labels = [];
+                grades = rangeArrayNormale;
 
             for (let i in grades) {
                 if (Math.trunc(grades[i]) - grades[i] < 0) {
@@ -79,8 +78,8 @@ async function addGeofences(data) {
             div.innerHTML = '<p>Attivazioni geofence normali</p>';
             for (var i = 0; i < grades.length; i++) {
                 div.innerHTML +=
-                    '<i style="background:' + getColorGeofences(grades[i] + 1) + '"></i> ' +
-                    grades[i] + (grades[i + 1] ? ' &ndash; ' + grades[i + 1] + '<br>' : ' +');
+                    '<i style="background:' + getColorGeofences(grades[i]) + '"></i> ' +
+                    grades[i] + (grades[i + 1] ? ' &ndash; ' + (grades[i + 1] - 1) + '<br>' : '');
             }
             return div;
         };

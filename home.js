@@ -46,6 +46,7 @@ L.control.layers(baseMaps).addTo(mymap);
 var geofenceData, geofenceVietateData;
 
 var sidebar = L.control.sidebar('sidebar', {
+    closeButton: false,
     position: 'left'
 });
 
@@ -269,17 +270,23 @@ var dialogNumClusters;
 
 //Options per il dialog che si apre quando premiamo il bottone per clusterizzare
 var optionsDialogCluster = {
-    size: [400, 150],
+    size: [350, 300],
     minSize: [100, 100],
     maxSize: [350, 350],
-    anchor: [100, 700],
+    anchor: [180, 800],
     position: "topleft",
-    initOpen: true
+    initOpen: true,
 }
 
 //Dialogo per inserire il numero di cluster da fare
 dialogNumClusters = L.control.dialog(optionsDialogCluster).setContent('<label> Numero di cluster: </label></br>' +
-    '<input type="number" name="number_cluster" id="number_cluster" value="3" max="' + maxCluster + '" required>' +
+    '<input type="number" name="number_cluster" id="number_cluster" value="3" max="' + maxCluster + '" required><br><br>' +
+    '<label> Inserisci intervallo: </label> ' +
+    '<input type="checkbox" name="con_data" id="con_data" onclick="abilitaDateDialog()"><br>' +
+    '<label> Data inizio: </label></br> ' +
+    '<input type="date" name="data_inizio" id="data_inizio" placeholder="Inserisci la data iniziale" disabled="true"><br><br>' +
+    '<label> Data fine: </label></br> ' +
+    '<input type="date" name="data_fine" id="data_fine" placeholder="Inserisci la data finale" disabled="true"><br><br>' +
     '<button onclick="avviaScriptClustering()">Avvia</button>')
 
 //Bottone per avviare il clustering delle bici
@@ -313,29 +320,73 @@ var viewClustering = (new btnClustering()).addTo(mymap);
 
 //Viene chiamata quando clicchiamo l'avvia sul dialog
 function avviaScriptClustering() {
+    window.htmlInputDataInizio = document.getElementById('data_inizio');
+    window.htmlInputDataFine = document.getElementById('data_fine');
+    window.htmlCheckbox = document.getElementById('con_data');
+
     window.numberOfClusters = document.getElementById('number_cluster').value;  //Prendiamo il numero di cluster che l'utente ha scelto per il KMEANS
+    if (htmlCheckbox.checked) {
+        if (htmlInputDataInizio.value === "" || htmlInputDataFine.value === "") {
+            alert("Inserisci entrambe le date!");
+            return;
+        }
+
+        if (new Date(htmlInputDataInizio.value) > new Date(htmlInputDataFine.value)) {
+            alert("Hai inserito le date in modo errato! La data di fine non può essere più piccola di quella di inizio! ");
+            return;
+        }
+    }
 
     //Se l'utente inserisce troppi cluster diamo errore, altrimenti (vedi else)
     if (document.getElementById('number_cluster').value > maxCluster) {
         alert("Non puoi inserire una suddivisione in cluster maggiore di " + maxCluster + "!");
     } else {
-        disabilitaPulsanti();
-        //Rimuoviamo il dialog
-        dialogNumClusters.remove();
-        mymap.removeLayer(dialogNumClusters);
+        if (document.getElementById('number_cluster').value < 0) {
+            alert("Non puoi inserire una suddivisione in cluster minore di 0!");
+        } else {
+            disabilitaPulsanti();
+            //Rimuoviamo il dialog
+            dialogNumClusters.remove();
+            mymap.removeLayer(dialogNumClusters);
 
-        //Avviamo lo script per clusterizzare
-        $.getScript("./get_clustering.js")
-            .done(function (script, textStatus) {
-                console.log("Clustering avviato!");
-                buttonClustering.disabled = false;
-            })
-            .fail(function (jqxhr, settings, exception) {
-                console.log("Errore nella visualizzazione del clustering!");
-            });
+            //Avviamo lo script per clusterizzare
+            $.getScript("./get_clustering.js")
+                .done(function (script, textStatus) {
+                    console.log("Clustering avviato!");
+                    buttonClustering.disabled = false;
+                })
+                .fail(function (jqxhr, settings, exception) {
+                    console.log("Errore nella visualizzazione del clustering!");
+                });
+        }
     }
 }
 
+function abilitaDateDialog() {
+    let htmlInputDataInizio = document.getElementById('data_inizio');
+    let htmlInputDataFine = document.getElementById('data_fine');
+
+    htmlInputDataInizio.disabled = false;
+    htmlInputDataFine.disabled = false;
+
+    let htmlCheckbox = document.getElementById('con_data');
+    htmlCheckbox.onclick = function () {
+        disabilitaDateDialog();
+    };
+}
+
+function disabilitaDateDialog() {
+    let htmlInputDataInizio = document.getElementById('data_inizio');
+    let htmlInputDataFine = document.getElementById('data_fine');
+
+    htmlInputDataInizio.disabled = true;
+    htmlInputDataFine.disabled = true;
+
+    let htmlCheckbox = document.getElementById('con_data');
+    htmlCheckbox.onclick = function () {
+        abilitaDateDialog();
+    };
+}
 
 /**** INTENSITA' ATTIVAZIONI GEOFENCE *****/
 var buttonAttivazioni = L.DomUtil.create('button', 'Attivazioni');

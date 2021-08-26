@@ -149,7 +149,6 @@ app.get("/checkDistance", async (req, res) => {
     if (!response) {
         console.log('Errore nel ritrovamento della rastrelliera vicino all\'utente!' + '\n' + errore_completo);
     } else {
-        console.log(response.rows)
         res.json(response.rows)
     }
 });
@@ -235,7 +234,7 @@ app.post("/prenota", (req, res) => {
 
 /* Facendo una richiesta "POST" ad URL "/rastrelliere_marker" si aggiunge tramite disegno una rastrelliera. */
 app.post("/rastrelliere_marker", (req, res) => {
-    query_insert = 'INSERT INTO rastrelliere(name, geom) VALUES (' + apice + req.body.name + apice + ', ST_GeomFromText(' + apice + 'POINT(' + req.body.long + ' ' + req.body.lat + ')' + apice + ')) ON CONFLICT ON CONSTRAINT name DO NOTHING;'
+    query_insert = 'INSERT INTO rastrelliere(name, geom) VALUES (' + apice + req.body.name + apice + ', ST_GeomFromText(' + apice + 'POINT(' + req.body.long + ' ' + req.body.lat + ')' + apice + ')) ON CONFLICT ON CONSTRAINT rastrelliere_name_key DO NOTHING;'
     client.query(query_insert, async (err, result) => {
         if (err) {
             console.log('Errore non sono riuscito ad aggiungere la rastrelliera!');
@@ -262,7 +261,7 @@ app.post("/rastrelliere_file", (req, res) => {
         name = name.replace("'", " ")
         var long = ras.geometry.coordinates[0];
         var lat = ras.geometry.coordinates[1];
-        query_insert += 'INSERT INTO rastrelliere(name, geom) VALUES (' + apice + name + apice + ', ST_GeomFromText(' + apice + 'POINT(' + long + ' ' + lat + ')' + apice + ')) ON CONFLICT ON CONSTRAINT name DO NOTHING;';
+        query_insert += 'INSERT INTO rastrelliere(name, geom) VALUES (' + apice + name + apice + ', ST_GeomFromText(' + apice + 'POINT(' + long + ' ' + lat + ')' + apice + ')) ON CONFLICT ON CONSTRAINT rastrelliere_name_key DO NOTHING;';
     }
 
     client.query(query_insert, async (err, result) => {
@@ -430,7 +429,8 @@ app.post("/clustering", async (req, res) => {
         for (arr of arrs) {
             newDataset.push({
                 id: arr + 1,
-                ras: dataset[arr],
+                long: dataset[arr][1],
+                lat: dataset[arr][0],
                 cluster: i
             });
         }
@@ -438,7 +438,6 @@ app.post("/clustering", async (req, res) => {
     }
     const JSONClusters = JSON.parse(JSON.stringify(Object.assign({}, newDataset)));
     res.json(JSONClusters);
-
 });
 
 app.post("/delete_inizializzazione", async (req, res) => {
@@ -446,7 +445,7 @@ app.post("/delete_inizializzazione", async (req, res) => {
 
     client.query(query_insert, async (err, result) => {
         if (err) {
-            console.log('Errore nella cancellazione dell\'inizializzazione del database! ' + '\n' + err + '\n' +err.detail);
+            console.log('Errore nella cancellazione dell\'inizializzazione del database! ' + '\n' + err + '\n' + err.detail);
         } else {
             console.log('Cancellazione in inizializzazione del database andata a buon fine!');
         }
@@ -541,7 +540,7 @@ function getBiciFuoriRange() {
         '    AND rastrelliere.id = noleggio.rastrelliera\n' +
         '    AND noleggio.bicicletta = bicicletta.id\n' +
         '    AND codice NOT IN (SELECT noleggio FROM storico)\n' +
-        '    and ST_DistanceSphere(rastrelliere.geom, bicicletta.posizione) > 5000'
+        '    and ST_DistanceSphere(rastrelliere.geom, bicicletta.posizione) > 1500'
     )
 }
 
@@ -554,14 +553,8 @@ function getPosRastr(id) {
 }
 
 function getDatiNoleggio(codiceNoleggio) {
-    return client.query('SELECT bicicletta, utente, data_inizio FROM noleggio WHERE codice =' + apice + codiceNoleggio + apice + '   ORDER BY data_inizio');
+    return client.query('SELECT bicicletta, utente, data_inizio, data_fine FROM noleggio WHERE codice =' + apice + codiceNoleggio + apice + '   ORDER BY data_inizio');
 }
 
 // All'avvio apriamo la home con il browser di default.
 open("http://localhost:3000/home");
-
-
-
-
-
-

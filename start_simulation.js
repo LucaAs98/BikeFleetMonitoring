@@ -193,8 +193,7 @@ async function prenotaUtente(user) {
     let ids = await getRastrellieraEBici();     //Prendiamo randomicamente una rastrelliera ed una bici presso di essa
 
     let prenotazione = {                        //Creiamo una prenotazione ed assegnamola all'utente
-        di: "2021-08-11 11:05:00",
-        df: "2021-08-11 11:05:00",
+        di: getCurrentTime(),
         utente: user.username,
         bici: ids.idBici,
         cod: randomString(10, '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'),
@@ -267,7 +266,8 @@ async function terminaNoleggio(id, user) {
         codNoleggio: user.prenotazione.cod,
         bici: user.prenotazione.bici,
         geom: "[" + user.prenotazione.geom + "]",
-        rastrelliera: id
+        rastrelliera: id,
+        df: getCurrentTime()
     }
 
     let formBody = [];
@@ -322,4 +322,11 @@ function calcoloCoordinate() {
     let lat = y + y0;
 
     return [long, lat];             //Posizione dove si sposterà
+}
+
+function getCurrentTime() {
+    let today = new Date();
+    let date = today.getFullYear() + '-' + (today.getMonth() + 1) + '-' + today.getDate();
+    let time = today.getHours() + ":" + today.getMinutes() + ":" + today.getSeconds();
+    return date + ' ' + time;
 }

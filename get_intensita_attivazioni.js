@@ -1,3 +1,4 @@
+var maxValoriUnivoci = 6;
 getIntensitaAttivazioni();
 
 async function getIntensitaAttivazioni() {
@@ -73,10 +74,13 @@ async function addIntensitaAttivazioni(data) {
             valuesGeoVietate.push(value);
         }
     }
+    let nAttivazioniUnivocheNormali = getNValoriUnivoci(valuesGeoNormali);
+    let nAttivazioniUnivocheVietate = getNValoriUnivoci(valuesGeoVietate);
+
     let maxGeof = Math.max.apply(null, valuesGeoNormali.map(item => item.attivazioni));
     let maxGeofViet = Math.max.apply(null, valuesGeoVietate.map(item => item.attivazioni));
-    window.rangeArrayNormale = split(0, maxGeof, 6);
-    window.rangeArrayVietato = split(0, maxGeofViet, 6);
+    window.rangeArrayNormale = split(0, maxGeof, calcolaMaxParti(nAttivazioniUnivocheNormali));
+    window.rangeArrayVietato = split(0, maxGeofViet, calcolaMaxParti(nAttivazioniUnivocheVietate));
 
     $.getScript("./get_geofences.js")
         .done(function (script, textStatus) {
@@ -106,4 +110,21 @@ function split(left, right, parts) {
     }
     result.push(right);
     return result;
+}
+
+function getNValoriUnivoci(geofenceObject) {
+    let valori = [];
+    console.log(geofenceObject);
+    for (let valore of geofenceObject) {
+        valori.indexOf(valore.attivazioni) === -1 ? valori.push(valore.attivazioni) : console.log("This item already exists");
+    }
+    return valori.length;
+}
+
+function calcolaMaxParti(valoriUnivoci) {
+    if (valoriUnivoci < maxValoriUnivoci) {
+        return valoriUnivoci;
+    } else {
+        return maxValoriUnivoci;
+    }
 }

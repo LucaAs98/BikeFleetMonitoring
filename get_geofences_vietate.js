@@ -68,8 +68,7 @@ function addGeofencesVietate(data) {
 
         window.legendGeofenceVietate.onAdd = function () {
             var div = L.DomUtil.create('div', 'info legend'),
-                grades = rangeArrayVietato,
-                labels = [];
+                grades = rangeArrayVietato;
 
             div.innerHTML = '<p>Attivazioni geofence vietate:</p>'
 
@@ -83,8 +82,8 @@ function addGeofencesVietate(data) {
             // loop through our density intervals and generate a label with a colored square for each interval
             for (var i = 0; i < grades.length; i++) {
                 div.innerHTML +=
-                    '<i style="background:' + getColorGeofences(grades[i] + 1) + '"></i> ' +
-                    grades[i] + (grades[i + 1] ? ' &ndash; ' + grades[i + 1] + '<br>' : ' +');
+                    '<i style="background:' + getColorGeofences(grades[i]) + '"></i> ' +
+                    grades[i] + (grades[i + 1] ? ' &ndash; ' + (grades[i + 1] - 1) + '<br>' : '');
             }
             return div;
         };

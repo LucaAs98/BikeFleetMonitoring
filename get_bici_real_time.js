@@ -46,7 +46,6 @@ async function addRealTime(data) {
 
     function getIcon(feature) {
         var color = 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png';
-        console.log(biciFuoriRange)
 
         for (var bici of biciFuoriRange) {
             if (bici.id === feature.properties.id ) {
@@ -65,6 +64,7 @@ async function addRealTime(data) {
 
     }
 
+    mymap.removeLayer(window.layerBiciRealTime);
     window.layerBiciRealTime.addTo(mymap);
 }
 

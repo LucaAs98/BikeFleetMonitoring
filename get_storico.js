@@ -76,12 +76,14 @@ async function creaSidebar() {
 
         datiNoleggio.push(await responseDatiNoleggio.json());   //Pushiamo i dati ottenuti nel nostro array
 
+
+        let dataInizio = new Date(datiNoleggio[datiNoleggio.length - 1][0].data_inizio).getDate() + "-" + (new Date(datiNoleggio[datiNoleggio.length - 1][0].data_inizio).getMonth() + 1) + "-" + new Date(datiNoleggio[datiNoleggio.length - 1][0].data_inizio).getFullYear();
         //Aggiungiamo alla sidebar il codice per visualizzare i dati di ogni storico
         contentSidebar +=
             '<br>' +
             '<table id="tableDatiNoleggio">' +
             '<span> <b>Bicicletta:</b> ' + datiNoleggio[datiNoleggio.length - 1][0].bicicletta + '</span><br>' +
-            '<span> <b>Data inizio:</b> ' + datiNoleggio[datiNoleggio.length - 1][0].data_inizio.slice(0, -14) + '</span>' +
+            '<span> <b>Data inizio:</b> ' + dataInizio + '</span>' +
             '<button type="button" class="buttonVisualizzaStorico" id=' + idBottone + ' onClick="visualizzaStorico(\'' + feature.properties.codice + '\', \'' + i + '\')">Visualizza storico</button><br>' +
             '<span> <b>Utente:</b> ' + datiNoleggio[datiNoleggio.length - 1][0].utente + '</span>' +
             '</table>' +
@@ -89,6 +91,7 @@ async function creaSidebar() {
 
         i++;
     }
+
 
     //Aggiungiamo l'html appena preso alla sidebar
     sidebar.setContent(contentSidebar);
