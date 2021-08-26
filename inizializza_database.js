@@ -29,7 +29,7 @@ async function inizializzaDatabase() {
             }
             formBody = formBody.join("&");
 
-            fetch('/inizializza_database', {
+            await fetch('/inizializza_database', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded'
