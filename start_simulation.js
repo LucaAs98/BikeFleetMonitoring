@@ -3,12 +3,12 @@ let velocitaSimulazione = 500;
 avvia();
 
 async function avvia() {
-    let arrUtenti = [];
-    let formBody = [];
-    let maxUtenti = 2;
+    let arrUtenti = []; //Array degli utenti
+    let formBody = [];  //Body da passare alla richiesa POST
+    let maxUtenti = 2;  //Numero utenti nella simulazione
 
     for (let j = 0; j < maxUtenti; j++) {
-
+        //Creiamo gli utenti come "User0","User1","User2", ecc..
         let user = {
             username: "User" + j,
             password: "6666",
@@ -17,9 +17,8 @@ async function avvia() {
                 coordinate: {},
                 terminato: false
             },
-            nEsecuzioni: 5
+            nEsecuzioni: 5  //Ogni utente ha un tot di simulazioni che può fare. Quando ne finisce una ne ricomincia un'altra
         }
-
         arrUtenti.push(user);
     }
 
@@ -30,7 +29,7 @@ async function avvia() {
 
     let flagRegistrazione;
 
-    /*Inserimento nel database degli utenti se*/
+    //Inserimento nel database degli utenti. Li registriamo solo se non sono già presenti.
     for (const user of arrUtenti) {
         flagRegistrazione = true;
 
@@ -42,6 +41,7 @@ async function avvia() {
             }
         }
 
+        //Se non è presente registriamolo
         if (flagRegistrazione || (jsonUtenti !== undefined && jsonUtenti.length === 0)) {
             formBody = [];
             for (let property in user) {
@@ -61,52 +61,48 @@ async function avvia() {
         }
     }
 
-    /* Prenotazione random della bicicletta */
+    //Ogni utente prenota ed inizia a noleggiare una bici.
     for (const user1 of arrUtenti) {
         await prenotaUtente(user1);
         await startNoleggio(user1);
     }
 
+    //Aggiungiamo le posizioni degli utenti che stanno noleggiando.
     await sendPositions();
 
     async function sendPositions() {
         let conTerminati = 0;
 
         for (const user of arrUtenti) {
-
             if (!(user.terminazione.terminato)) {
-
                 formBody = [];
-
                 let lat;
                 let long;
 
-                if (user.prenotazione.geom.length === 0) {
+                if (user.prenotazione.geom.length === 0) {      //Mettiamo la bici nela rastrelliera più vicino
                     const responsePosRastr = await fetch('/pos_rastr?id=' + user.prenotazione.ras, {
                         method: 'GET',
                     });
                     const jsonPosRastr = await responsePosRastr.json();
 
-                    lat = jsonPosRastr[0].lat;  //posizione rastrelliera di partenza
-                    long = jsonPosRastr[0].long;
+                    lat = jsonPosRastr[0].lat;      //Latitudine rastrelliera di partenza
+                    long = jsonPosRastr[0].long;    //Longitudine rastrelliera di partenza
 
                 } else {
-                    let coordinate = calcoloCoordinate();
-                    //calcolo coordinate random
+                    let coordinate = calcoloCoordinate();   //Calcolo coordinate random di spostamento
 
-                    long = coordinate[0];
-                    lat = coordinate[1];
+                    long = coordinate[0];                   //Longitudine di spostamento successivo
+                    lat = coordinate[1];                    //Latitudine di spostamento successivo
 
                 }
 
                 //Creazione della stringa con tutte le geometrie
                 if (user.prenotazione.geom.length > 0) {
                     user.prenotazione.geom += ",";
-
                 }
                 user.prenotazione.geom += "[" + long + "," + lat + "]";
 
-                //add della posizione
+                //Aggiungiamo la posizione
                 let coordinates = {
                     long: long,
                     lat: lat,
@@ -119,7 +115,6 @@ async function avvia() {
                     let encodedKey = encodeURIComponent(property);
                     let encodedValue = encodeURIComponent(coordinates[property]);
                     formBody.push(encodedKey + "=" + encodedValue);
-
                 }
                 formBody = formBody.join("&");
 
@@ -131,16 +126,20 @@ async function avvia() {
                     body: formBody,
                 });
 
+                //Decrementiamo i salti che ha fatto l'utente
                 user.prenotazione.maxSalti--;
 
+                //Se ha superato il limite dei salti possibili allora controlliamo che possa terminare il noleggio
                 if (user.prenotazione.maxSalti <= 0) {
                     await controlloTerminazione(user);
                 }
             } else {
+                //Utenti che hanno terminato le loro simulazioni
                 conTerminati++;
             }
         }
 
+        //Se non hanno finito tutti gli utenti allora continuiamo, altrimenti abilitiamo nuovamente tutti i pulsanti e terminiamo la simulazione
         if (conTerminati < maxUtenti) {
             setTimeout(sendPositions, velocitaSimulazione);
         } else {
@@ -148,7 +147,6 @@ async function avvia() {
         }
     }
 }
-
 
 //Crea il codice per il noleggio
 function randomString(length, chars) {
@@ -162,6 +160,7 @@ function random_number(min, max) {
     return Math.floor(Math.random() * (max - min + 1) + min);
 }
 
+//Prende una rastrelliera random ed una sua bici sempre a caso.
 async function getRastrellieraEBici() {
     let flagWhile = true;
     let ids = {
@@ -186,14 +185,14 @@ async function getRastrellieraEBici() {
             flagWhile = false;
         }
     }
-
     return ids;
 }
 
+//Metodo grazie alla quale l'utetnte prenota una bici
 async function prenotaUtente(user) {
+    let ids = await getRastrellieraEBici();     //Prendiamo randomicamente una rastrelliera ed una bici presso di essa
 
-    let ids = await getRastrellieraEBici();
-    let prenotazione = {
+    let prenotazione = {                        //Creiamo una prenotazione ed assegnamola all'utente
         di: "2021-08-11 11:05:00",
         df: "2021-08-11 11:05:00",
         utente: user.username,
@@ -203,10 +202,10 @@ async function prenotaUtente(user) {
         geom: "",
         maxSalti: random_number(5, 5)
     }
-
     user.prenotazione = prenotazione;
 
-    formBody = [];
+    //Creiamo il body da passare alla richiesta per la prenotazione
+    let formBody = [];
     for (let property in prenotazione) {
         let encodedKey = encodeURIComponent(property);
         let encodedValue = encodeURIComponent(prenotazione[property]);
@@ -223,14 +222,14 @@ async function prenotaUtente(user) {
     });
 }
 
+//Metodo per far partire il noleggio da parte di un utente
 async function startNoleggio(user) {
-    let noleggio = {
+    let noleggio = {                    //Creiamo l'oggetto del noleggio per passare i suoi ati al body della richiesta
         codNoleggio: user.prenotazione.cod,
     }
 
-    formBody = [];
+    let formBody = [];
     for (let property in noleggio) {
-
         let encodedKey = encodeURIComponent(property);
         let encodedValue = encodeURIComponent(noleggio[property]);
         formBody.push(encodedKey + "=" + encodedValue);
@@ -248,23 +247,22 @@ async function startNoleggio(user) {
 
 //Controlla se la terminazione è possibile. Se lo è, effettua la terminazione del noleggio
 async function controlloTerminazione(user) {
-    //se la posizione finale non è vicino a una rastrelliera, lo spostamento continua
+    //Se la posizione finale non è vicino a una rastrelliera, lo spostamento continua
     const response = await fetch('/checkDistance?lat=' + user.terminazione.coordinate.lat + '&lng=' + user.terminazione.coordinate.long, {
         method: 'GET',
     });
     const data = await response.json();
-    let id;
 
+    //data[0] sarà undefined se l'utente non si trova vicino ad una rastrelliera
     if (data[0] !== undefined) {
-        id = data[0].id;
-        user.terminazione.terminato = true;
-        await terminaNoleggio(id, user);
+        user.terminazione.terminato = true;             //Segnaliamo che l'utene ha terminato
+        await terminaNoleggio(data[0].id, user);        //Terminiamo il noleggio
     }
 }
 
-/* Faccio terminare il noleggio. */
+//Facciamo terminare il noleggio.
 async function terminaNoleggio(id, user) {
-
+    //Salviamo i dai per concludere il noleggio, in modo tale da passarli al body della richiesta
     let noleggioTerminato = {
         codNoleggio: user.prenotazione.cod,
         bici: user.prenotazione.bici,
@@ -272,7 +270,7 @@ async function terminaNoleggio(id, user) {
         rastrelliera: id
     }
 
-    formBody = [];
+    let formBody = [];
     for (let property in noleggioTerminato) {
         let encodedKey = encodeURIComponent(property);
         let encodedValue = encodeURIComponent(noleggioTerminato[property]);
@@ -288,25 +286,28 @@ async function terminaNoleggio(id, user) {
         body: formBody,
     });
 
+    //Sottraiamo il numero di esecuzioni ch erestano all'utente
     user.nEsecuzioni -= 1;
-    if (user.nEsecuzioni > 0) {
 
+    //Se l'utente ha ancora esecuzionni disponibili resettiamo i suoi dati
+    if (user.nEsecuzioni > 0) {
         user.prenotazione = {};
         user.terminazione = {
             coordinate: {},
             terminato: false
         };
 
+        //Avviamo una nuova prenotazione e noleggio
         await prenotaUtente(user);
         await startNoleggio(user);
     }
-
-
 }
 
+/* Calcoliamo le coordinate per simulare lo spostamento dell'utente nella mappa. Non ci spostiamo troppo dal centro
+ * delle mura, cercando di stare all'interno. */
 function calcoloCoordinate() {
-    let x0 = 11.341967582702637; //longitudine centro
-    let y0 = 44.49518903364097; //latitudine centro
+    let x0 = 11.341967582702637;    //Longitudine centro
+    let y0 = 44.49518903364097;     //Latitudine centro
     let rd = 1500 / 111300;
 
     let u = Math.random();
@@ -320,5 +321,5 @@ function calcoloCoordinate() {
     let long = (x / Math.cos(y0)) + x0;
     let lat = y + y0;
 
-    return [long, lat];
+    return [long, lat];             //Posizione dove si sposterà
 }
