@@ -167,7 +167,9 @@ async function getClustering() {
             },
         }).addTo(mymap);
     } else {
-        alert("Non ci sono storici nelle date selezionate!")
+        alert("Non ci sono storici nelle date selezionate!");
+        nascondiClustering = false;
+        buttonClustering.innerHTML = 'Avvia Clustering';
     }
-    abilitaPulsanti();
+    abilitaPulsanti([buttonClustering]);
 }

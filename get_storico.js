@@ -1,8 +1,8 @@
 var jsonFeatures = [];      //Contiene tutti i percorsi ed il codice di prenotazione del noleggio corrispondente
-let storicoEDati = [];      //Contiene lo storico con i dati veri e propri dei layer attivi
+var storicoEDati = [];      //Contiene lo storico con i dati veri e propri dei layer attivi
 window.storicoLayerAttivi = []; //Contiene i layer attivi
 
-sidebar.on('hidden', function () {
+sidebar.on('hide', function () {
     pulisciStorici();
 });
 
@@ -65,9 +65,9 @@ async function creaSidebar() {
     /* Variabile che contiene tutto l'html da visualizzare nella sidebar.
     *  Partiamo aggiungendo i primi tre bottoni per visualizzare tutti i percorsi, per pulire la schermata o per visualizzare
     *  l'heatmap dei percorsi. Ognuno di questi bottoni richiama un metodo ben preciso. */
-    let contentSidebar = '<button type="button" onClick="vediTuttiGliStorici()">Visualizza tutti</button>' +
-        '<button type="button" onClick="pulisciStorici()">Pulisci storici</button>' +
-        '<button type="button" id="vediHeatmap" onClick="vediHeatmap()">Visualizza HeatMap</button><br>';
+    let contentSidebar = '<button type="button" class="btn-sm btn-block btn btn-primary" onClick="vediTuttiGliStorici()">Visualizza tutti</button>' +
+        '<button type="button" class="btn-sm btn-block btn btn-primary" onClick="pulisciStorici()">Pulisci storici</button>' +
+        '<button type="button" id="vediHeatmap" class="btn-sm btn-block btn btn-primary" onClick="vediHeatmap()">Visualizza HeatMap</button><br>';
 
     // Aggiungiamo i dati di ogni storico alla sidebar.
     for (let feature of jsonFeatures) {
@@ -84,7 +84,7 @@ async function creaSidebar() {
             '<table id="tableDatiNoleggio">' +
             '<span> <b>Bicicletta:</b> ' + datiNoleggio[datiNoleggio.length - 1][0].bicicletta + '</span><br>' +
             '<span> <b>Data inizio:</b> ' + dataInizio + '</span>' +
-            '<button type="button" class="buttonVisualizzaStorico" id=' + idBottone + ' onClick="visualizzaStorico(\'' + feature.properties.codice + '\', \'' + i + '\')">Visualizza storico</button><br>' +
+            '<button type="button" class="btn btn-primary buttonVisualizzaStorico" id=' + idBottone + ' onClick="visualizzaStorico(\'' + feature.properties.codice + '\', \'' + i + '\')">Visualizza storico</button><br>' +
             '<span> <b>Utente:</b> ' + datiNoleggio[datiNoleggio.length - 1][0].utente + '</span>' +
             '</table>' +
             '<br><br>';

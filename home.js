@@ -45,14 +45,7 @@ L.control.layers(baseMaps).addTo(mymap);
 
 var geofenceData, geofenceVietateData;
 
-var sidebar = L.control.sidebar('sidebar', {
-    closeButton: false,
-    position: 'left'
-});
-
-mymap.addControl(sidebar);
-
-/**** CARICA RASRELLIERE *****/
+/**** CARICA RASTRELLIERE *****/
 $.getScript("./get_rastrelliere.js")
     .done(function (script, textStatus) {
         console.log("Caricamento rastrelliere completato");
@@ -90,7 +83,7 @@ $.getScript("./draw.js")
 
 
 /**** RASTRELLIERE DA FILE *****/
-var buttonAddRastrelliereFromFile = L.DomUtil.create('button', 'Aggiungi rastrelliere');
+var buttonAddRastrelliereFromFile = L.DomUtil.create('button', 'Aggiungi rastrelliere btn-block btn btn-light');
 
 var optionsDialogRastrelliere = {
     size: [400, 150],
@@ -106,11 +99,12 @@ var btnAddRastrelliereFromFile = L.Control.extend({
     onAdd: function () {
         buttonAddRastrelliereFromFile.innerHTML = 'Aggiungi rastrelliere da file';
         L.DomEvent.on(buttonAddRastrelliereFromFile, 'click', function () {
+            disabilitaPulsanti([buttonViewStorico, buttonReset, buttonViewBikesRealTime, buttonAttivazioni, buttonClustering, buttonSimulazione, buttonAddRastrelliereFromFile])
             var dialog = L.control.dialog(optionsDialogRastrelliere)
                 .setContent(
                     '<form enctype="multipart/form-data"  id="formFile" action="/rastrelliere_file" method="POST">' +
-                    '<input type="file" name="file" id="file" required>' +
-                    '<button onclick="doupload()" name="submit">Upload File</button>' +
+                    '<input type="file" name="file"  id="file" required><br>' +
+                    '<button onclick="doupload()" class="btn btn-primary btn-block" name="submit">Carica File</button>' +
                     '</form>\n'
                 ).addTo(mymap);
             dialog.hideResize();
@@ -133,37 +127,47 @@ function doupload() {
 
 
 /**** STORICO TRAGITTI *****/
-var buttonViewStorico = L.DomUtil.create('button', 'Storico');
+
+var sidebar = L.control.sidebar('sidebar', {
+    closeButton: false,
+    position: 'left',
+});
+
+var buttonViewStorico = L.DomUtil.create('button', 'Storico btn btn-light btn-block');
 //Bottone per vedere lo storico dei tragitti
 var btnViewStorico = L.Control.extend({
     onAdd: function () {
         let nascondiStorico = false;
         buttonViewStorico.innerHTML = 'Visualizza storico tragitti';
-        L.DomEvent.on(buttonViewStorico, 'click', function () {
+        L.DomEvent.on(buttonViewStorico, 'click', async function () {
             if (!nascondiStorico) {
-                //Rimuoviamo le rastrelliere dalla mappa
+                disabilitaPulsanti([buttonReset, buttonViewBikesRealTime, buttonAttivazioni, buttonClustering, buttonSimulazione, buttonAddRastrelliereFromFile]);                //Rimuoviamo le rastrelliere dalla mappa
                 mymap.removeLayer(window.clusterRastrelliere);
-
-                //Mostriamo la sidebar sulla mappa
-                setTimeout(function () {
-                    sidebar.show();
-                }, 0);
                 buttonViewStorico.innerHTML = 'Nascondi tragitto';
-                $.getScript("./get_storico.js")
+                await $.getScript("./get_storico.js")
                     .done(function (script, textStatus) {
                         console.log("Caricamento storico completato");
+
+                        mymap.addControl(sidebar);
+                        //Mostriamo la sidebar sulla mappa
+                        setTimeout(function () {
+                            sidebar.show();
+                        }, 0);
+
+                        nascondiStorico = true;
                     })
                     .fail(function (jqxhr, settings, exception) {
                         console.log("Errore nel caricamento storico tragitti");
                     });
-                nascondiStorico = true;
             } else {
                 buttonViewStorico.innerHTML = 'Visualizza storico tragitti';
-
+                abilitaPulsanti([buttonReset, buttonViewBikesRealTime, buttonAttivazioni, buttonClustering, buttonSimulazione, buttonAddRastrelliereFromFile]);
                 //Nascondiamo la sidebar e rimuoviamo tutti i layer presenti sulla mappa
                 setTimeout(function () {
                     sidebar.hide();
+                    mymap.removeControl(sidebar);
                 }, 0);
+
 
                 for (let item of window.storicoLayerAttivi) {
                     mymap.removeLayer(item);
@@ -191,7 +195,7 @@ var viewStorico = (new btnViewStorico()).addTo(mymap);
 
 /**** BICI REAL-TIME *****/
 window.abortLoopBikesRealTime = false;
-var buttonViewBikesRealTime = L.DomUtil.create('button', 'Bici tempo reale');
+var buttonViewBikesRealTime = L.DomUtil.create('button', 'Bici tempo reale btn btn-light btn-block');
 //Bottone per vedere gli utenti in real time
 var btnViewBikesRealTime = L.Control.extend({
     onAdd: function () {
@@ -202,13 +206,15 @@ var btnViewBikesRealTime = L.Control.extend({
             if (!nascondiBiciRealTime) {
                 window.abortLoopBikesRealTime = false;
                 buttonViewBikesRealTime.innerHTML = 'Nascondi bici noleggiate in tempo reale';
-                tid = setTimeout(getScriptBikeRealTime, 500);
+                tid = setTimeout(getScriptBikeRealTime, 10);
                 nascondiBiciRealTime = true;
+                mymap.removeLayer(window.clusterRastrelliere);
             } else {
                 buttonViewBikesRealTime.innerHTML = 'Visualizza bici noleggiate in tempo reale';
                 window.abortLoopBikesRealTime = true;
                 mymap.removeLayer(window.layerBiciRealTime);
                 nascondiBiciRealTime = false;
+                window.clusterRastrelliere.addTo(mymap);    //Ri-aggiungiamo le bici alla mappa
             }
         });
         return buttonViewBikesRealTime;
@@ -238,23 +244,41 @@ var viewBikes = (new btnViewBikesRealTime()).addTo(mymap);
 
 
 /**** SIMULAZIONE *****/
-var buttonSimulazione = L.DomUtil.create('button', 'Simulazione');
+var buttonSimulazione = L.DomUtil.create('button', 'Simulazione btn btn-light btn-block');
+let nascondiSimulazione = false;
+var maxUtenti = 10;
+var maxIteration = 5;
+var dialogNumUtenti;
 
+//Options per il dialog che si apre quando premiamo il bottone per clusterizzare
+var optionsDialogNumUtenti = {
+    size: [350, 280],
+    minSize: [100, 100],
+    maxSize: [350, 350],
+    anchor: [180, 800],
+    position: "topleft",
+    initOpen: true,
+}
+
+//Dialogo per inserire il numero di utenti da simulare
+dialogNumUtenti = L.control.dialog(optionsDialogNumUtenti).setContent(
+    '<br><label> Numero utenti con la quale effettuare la simulazione: </label></br>' +
+    '<input type="number" name="number_users" id="number_users" value="5" max="' + maxUtenti + '" required><br><br>' +
+    '<label> Numero iterazioni per ogni utente: </label><br>' +
+    '<input type="number" name="number_iteration" id="number_iteration" value="1" max="' + maxIteration + '" required><br><br>' +
+    '<button class="btn btn-primary btn-block" onclick="avviaSimulazione()">Avvia</button>'
+);
 //Bottone per avviare la simulazione
 var btnSimulazione = L.Control.extend({
     onAdd: function () {
         buttonSimulazione.innerHTML = 'Avvia Simulazione';
         L.DomEvent.on(buttonSimulazione, 'click', function () {
-            disabilitaPulsanti();
+            disabilitaPulsanti([buttonViewStorico, buttonReset, buttonAttivazioni, buttonClustering, buttonSimulazione, buttonAddRastrelliereFromFile]);
             buttonSimulazione.innerHTML = 'Simulazione avviata!';
-            $.getScript("./start_simulation.js")
-                .done(function (script, textStatus) {
-                    console.log("Simulazione avviata!");
-                })
-                .fail(function (jqxhr, settings, exception) {
-                    console.log("Errore nell'avvio della simulazione!");
-                });
-            buttonSimulazione.disabled = true;
+            dialogNumUtenti.addTo(mymap);             //Aggiungiamo il dialog alla pagina
+            dialogNumUtenti.hideResize();
+            dialogNumUtenti.freeze();
+            dialogNumUtenti.open();
         });
         return buttonSimulazione;
     }
@@ -262,9 +286,34 @@ var btnSimulazione = L.Control.extend({
 
 var viewSimulazione = (new btnSimulazione()).addTo(mymap);
 
+function avviaSimulazione() {
+    window.htmlInputUtenti = document.getElementById('number_users');
+    window.htmlInputIterazioni = document.getElementById('number_iteration');
+
+    if (htmlInputUtenti.value > maxUtenti) {
+        alert("Gli utenti non possono essere più di " + maxUtenti + "!")
+    } else if (htmlInputIterazioni.value > maxIteration) {
+        alert("Le iterazioni per ogni utente non possono essere più di " + maxIteration + "!")
+    } else if (htmlInputUtenti.value < 1 || window.htmlInputIterazioni.value < 1) {
+        alert("Gli utenti o le iterazioni per ogni utente non possono essere meno di 1!")
+    } else {
+        //Rimuoviamo il dialog
+        dialogNumUtenti.remove();
+        mymap.removeLayer(dialogNumUtenti);
+        nascondiSimulazione = true;
+        $.getScript("./start_simulation.js")
+            .done(function (script, textStatus) {
+                console.log("Simulazione avviata!");
+            })
+            .fail(function (jqxhr, settings, exception) {
+                console.log("Errore nell'avvio della simulazione!");
+            });
+
+    }
+}
 
 /**** CLUSTERING *****/
-var buttonClustering = L.DomUtil.create('button', 'Clustering');
+var buttonClustering = L.DomUtil.create('button', 'Clustering btn btn-light btn-block');
 var maxCluster = 10;
 var dialogNumClusters;
 
@@ -281,30 +330,32 @@ var optionsDialogCluster = {
 //Dialogo per inserire il numero di cluster da fare
 dialogNumClusters = L.control.dialog(optionsDialogCluster).setContent('<label> Numero di cluster: </label></br>' +
     '<input type="number" name="number_cluster" id="number_cluster" value="3" max="' + maxCluster + '" required><br><br>' +
-    '<label> Inserisci intervallo: </label> ' +
-    '<input type="checkbox" name="con_data" id="con_data" onclick="abilitaDateDialog()"><br>' +
+    '<div class="form-check">' +
+    '<input class="form-check-input" type="checkbox" name="con_data" id="con_data" onclick="abilitaDateDialog()">' +
+    '<label class="form-check-label" for="con_data"> Inserisci intervallo </label> ' +
+    '</div>' +
     '<label> Data inizio: </label></br> ' +
     '<input type="date" name="data_inizio" id="data_inizio" placeholder="Inserisci la data iniziale" disabled="true"><br><br>' +
     '<label> Data fine: </label></br> ' +
     '<input type="date" name="data_fine" id="data_fine" placeholder="Inserisci la data finale" disabled="true"><br><br>' +
-    '<button onclick="avviaScriptClustering()">Avvia</button>')
+    '<button class="btn btn-primary btn-block" onclick="avviaScriptClustering()">Avvia</button>'
+);
 
+let nascondiClustering = false;
 //Bottone per avviare il clustering delle bici
 var btnClustering = L.Control.extend({
     onAdd: function () {
-        let nascondiClustering = false;   //Variabile per capire se il pulsante è stato attivato o meno
+        nascondiClustering = false;   //Variabile per capire se il pulsante è stato attivato o meno
         buttonClustering.innerHTML = 'Avvia Clustering';
         L.DomEvent.on(buttonClustering, 'click', function () {
             if (!nascondiClustering) {
-                //Entriamo qui quando è stato iniziato il clustering
-                buttonClustering.innerHTML = 'Termina clustering';
+                disabilitaPulsanti([buttonViewStorico, buttonReset, buttonViewBikesRealTime, buttonAttivazioni, buttonClustering, buttonSimulazione, buttonAddRastrelliereFromFile])
                 dialogNumClusters.addTo(mymap);             //Aggiungiamo il dialog alla pagina
                 dialogNumClusters.hideResize();
                 dialogNumClusters.freeze();
                 dialogNumClusters.open();
-                buttonClustering.disabled = true;           //Disabilitiamo  il bottone fino a quando non ha messo il numero di cluster
-                nascondiClustering = true;
             } else {
+                abilitaPulsanti([buttonViewStorico, buttonReset, buttonViewBikesRealTime, buttonAttivazioni, buttonClustering, buttonSimulazione, buttonAddRastrelliereFromFile]);
                 //Entriamo qui quando è stato terminato il clustering
                 buttonClustering.innerHTML = 'Avvia Clustering';
                 mymap.removeLayer(window.clusterKMEANS);    //Togliamo la clusterizzazione dalla mappa
@@ -344,16 +395,16 @@ function avviaScriptClustering() {
         if (document.getElementById('number_cluster').value < 0) {
             alert("Non puoi inserire una suddivisione in cluster minore di 0!");
         } else {
-            disabilitaPulsanti();
+            disabilitaPulsanti([buttonViewStorico, buttonReset, buttonViewBikesRealTime, buttonAttivazioni, buttonClustering, buttonSimulazione, buttonAddRastrelliereFromFile]);
             //Rimuoviamo il dialog
             dialogNumClusters.remove();
             mymap.removeLayer(dialogNumClusters);
-
+            buttonClustering.innerHTML = 'Termina clustering';
+            nascondiClustering = true;
             //Avviamo lo script per clusterizzare
             $.getScript("./get_clustering.js")
                 .done(function (script, textStatus) {
                     console.log("Clustering avviato!");
-                    buttonClustering.disabled = false;
                 })
                 .fail(function (jqxhr, settings, exception) {
                     console.log("Errore nella visualizzazione del clustering!");
@@ -389,7 +440,7 @@ function disabilitaDateDialog() {
 }
 
 /**** INTENSITA' ATTIVAZIONI GEOFENCE *****/
-var buttonAttivazioni = L.DomUtil.create('button', 'Attivazioni');
+var buttonAttivazioni = L.DomUtil.create('button', 'Attivazioni btn btn-light btn-block');
 var btnViewAttivazioni = L.Control.extend({
     onAdd: function () {
         let nascondiAttivaz = false;
@@ -397,7 +448,7 @@ var btnViewAttivazioni = L.Control.extend({
         L.DomEvent.on(buttonAttivazioni, 'click', function () {
             if (!nascondiAttivaz) {
                 buttonAttivazioni.innerHTML = 'Nascondi intensità attivazioni geofence';
-                disabilitaPulsanti();
+                disabilitaPulsanti([buttonViewStorico, buttonReset, buttonViewBikesRealTime, buttonAttivazioni, buttonClustering, buttonSimulazione, buttonAddRastrelliereFromFile]);
                 $.getScript("./get_intensita_attivazioni.js")
                     .done(function (script, textStatus) {
                         console.log("Caricamento attivazioni completato");
@@ -441,24 +492,22 @@ var viewAttivazioni = (new btnViewAttivazioni()).addTo(mymap);
 
 
 /**** RESET *****/
-var buttonReset = L.DomUtil.create('button', 'Inizializza');
+var buttonReset = L.DomUtil.create('button', 'Inizializza btn btn-light btn-block');
 var btnReset = L.Control.extend({
     onAdd: function () {
         let nascondiReset = false;
         buttonReset.innerHTML = 'Resetta database';
         L.DomEvent.on(buttonReset, 'click', function () {
-            if (!nascondiReset) {
-                disabilitaPulsanti();
-                $.getScript("./inizializza_database.js")
-                    .done(function (script, textStatus) {
-                        console.log("Inizializzazione database completata");
-                    })
-                    .fail(function (jqxhr, settings, exception) {
-                        console.log("Errore nell\'inizializzazione del database!");
-                    });
-                nascondiReset = true;
-                buttonReset.disabled = true;
-            }
+            disabilitaPulsanti([buttonViewStorico, buttonReset, buttonViewBikesRealTime, buttonAttivazioni, buttonClustering, buttonSimulazione, buttonAddRastrelliereFromFile]);
+            $.getScript("./inizializza_database.js")
+                .done(function (script, textStatus) {
+                    console.log("Inizializzazione database completata");
+                })
+                .fail(function (jqxhr, settings, exception) {
+                    console.log("Errore nell\'inizializzazione del database!");
+                });
+            nascondiReset = true;
+            buttonReset.disabled = true;
         });
         return buttonReset;
     }
@@ -466,20 +515,18 @@ var btnReset = L.Control.extend({
 
 var inizializza = (new btnReset()).addTo(mymap);
 
-function disabilitaPulsanti() {
-    buttonReset.disabled = true;
-    buttonAttivazioni.disabled = true;
-    buttonClustering.disabled = true;
-    buttonSimulazione.disabled = true;
-    buttonViewStorico.disabled = true;
-    buttonAddRastrelliereFromFile.disabled = true;
+L.DomEvent.on(mymap, "dialog:closed", function () {
+    abilitaPulsanti([buttonViewStorico, buttonReset, buttonViewBikesRealTime, buttonAttivazioni, buttonClustering, buttonSimulazione, buttonAddRastrelliereFromFile]);
+});
+
+function disabilitaPulsanti(arrayBottoni) {
+    for (let bottone of arrayBottoni) {
+        bottone.disabled = true;
+    }
 }
 
-function abilitaPulsanti() {
-    buttonReset.disabled = false;
-    buttonAttivazioni.disabled = false;
-    buttonClustering.disabled = false;
-    buttonSimulazione.disabled = false;
-    buttonViewStorico.disabled = false;
-    buttonAddRastrelliereFromFile.disabled = false;
+function abilitaPulsanti(arrayBottoni) {
+    for (let bottone of arrayBottoni) {
+        bottone.disabled = false;
+    }
 }

@@ -1,11 +1,11 @@
-let velocitaSimulazione = 500;
+var velocitaSimulazione = 500;
 
 avvia();
 
 async function avvia() {
     let arrUtenti = []; //Array degli utenti
     let formBody = [];  //Body da passare alla richiesa POST
-    let maxUtenti = 2;  //Numero utenti nella simulazione
+    let maxUtenti = htmlInputUtenti.value;  //Numero utenti nella simulazione
 
     for (let j = 0; j < maxUtenti; j++) {
         //Creiamo gli utenti come "User0","User1","User2", ecc..
@@ -17,7 +17,7 @@ async function avvia() {
                 coordinate: {},
                 terminato: false
             },
-            nEsecuzioni: 5  //Ogni utente ha un tot di simulazioni che può fare. Quando ne finisce una ne ricomincia un'altra
+            nEsecuzioni: htmlInputIterazioni.value  //Ogni utente ha un tot di simulazioni che può fare. Quando ne finisce una ne ricomincia un'altra
         }
         arrUtenti.push(user);
     }
@@ -143,7 +143,8 @@ async function avvia() {
         if (conTerminati < maxUtenti) {
             setTimeout(sendPositions, velocitaSimulazione);
         } else {
-            abilitaPulsanti();
+            buttonSimulazione.innerHTML = 'Avvia Simulazione';
+            abilitaPulsanti([buttonViewStorico, buttonReset, buttonAttivazioni, buttonClustering, buttonSimulazione, buttonAddRastrelliereFromFile]);
         }
     }
 }

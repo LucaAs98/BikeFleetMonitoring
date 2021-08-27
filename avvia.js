@@ -28,7 +28,7 @@ const app = express();
 client.connect();
 
 app.use(express.static(__dirname));
-app.use(bodyParser.urlencoded())
+app.use(bodyParser.urlencoded({limit: '50mb', extended: true,  parameterLimit: 1000000}))
 app.use(fileUpload({
     createParentPath: true
 }));
