@@ -16,7 +16,8 @@ async function getClustering() {
             let dataInizioHtml = new Date(window.htmlInputDataInizio.value).getDate() + "-" + (new Date(window.htmlInputDataInizio.value).getMonth() + 1) + "-" + new Date(window.htmlInputDataInizio.value).getFullYear();
             let dataFineHtml = new Date(window.htmlInputDataFine.value).getDate() + "-" + (new Date(window.htmlInputDataFine.value).getMonth() + 1) + "-" + new Date(window.htmlInputDataFine.value).getFullYear();
 
-            if (dateTimeInizio >= dataInizioHtml && dateTimeFine <= dataFineHtml) {
+            console.log(dateTimeInizio + " " + dataInizioHtml + " " + dateTimeFine + " " + dataFineHtml);
+            if (+dateTimeInizio >= +dataInizioHtml && +dateTimeFine <= +dataFineHtml) {
                 datiNoleggio.push(itemStorico.codice);   //Pushiamo i dati ottenuti nel nostro array
             }
         } else {
