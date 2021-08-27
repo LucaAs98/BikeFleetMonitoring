@@ -216,6 +216,26 @@ app.get("/get_dati_noleggio", async (req, res) => {
     }
 })
 
+app.get("/insert_delay", async (req, res) => {
+    var response = await insertDelay(req.query.delay, req.query.user).catch((err) => errore_completo = err);
+
+    if (!response) {
+        console.log('Errore nell\'inserimento del delay!' + '\n' + errore_completo);
+    }else{
+        console.log('Inserimento del ritardo avvenuto con successo!')
+    }
+})
+
+app.get("/stats_delay", async (req, res) => {
+    var response = await statsDelay().catch((err) => errore_completo = err);
+
+    if (!response) {
+        console.log('Errore nel calcolo delle statistiche!' + '\n' + errore_completo);
+    }else{
+        res.json(response.rows);
+    }
+})
+
 /*** Richieste POST ***/
 /* Facendo una richiesta "POST" ad URL "/prenota" si effettua il noleggio di una bici con i dati passati al body. */
 
@@ -230,7 +250,6 @@ app.post("/prenota", (req, res) => {
 
     res.end();
 });
-
 
 /* Facendo una richiesta "POST" ad URL "/rastrelliere_marker" si aggiunge tramite disegno una rastrelliera. */
 app.post("/rastrelliere_marker", (req, res) => {
@@ -554,6 +573,23 @@ function getPosRastr(id) {
 
 function getDatiNoleggio(codiceNoleggio) {
     return client.query('SELECT bicicletta, utente, data_inizio, data_fine FROM noleggio WHERE codice =' + apice + codiceNoleggio + apice + '   ORDER BY data_inizio');
+}
+
+function insertDelay(delay, user){
+    return client.query('Insert into delay (ritardo, utente) values ('+delay+', '+ apice + user + apice +')');
+}
+
+function statsDelay(){
+    return client.query('select *\n' +
+        'from(\n' +
+        '\tselect count(*) as numero_delay, round(avg(ritardo),2) as media, utente\n' +
+        '\tfrom delay\n' +
+        '\tgroup by utente\n' +
+        '\tunion\n' +
+        '\tselect count(*) as numero_delay, round(avg(ritardo),2) as media, \'Tutti\' as utente\n' +
+        '\tfrom delay\n' +
+        ') as t1\n' +
+        'order by utente');
 }
 
 // All'avvio apriamo la home con il browser di default.
