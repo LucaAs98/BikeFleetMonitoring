@@ -166,10 +166,11 @@ async function getClustering() {
                 });
             },
         }).addTo(mymap);
+        abilitaPulsanti([buttonClustering]);
     } else {
         alert("Non ci sono storici nelle date selezionate!");
         nascondiClustering = false;
         buttonClustering.innerHTML = 'Avvia Clustering';
+        abilitaPulsanti([buttonViewStorico, buttonReset, buttonViewBikesRealTime, buttonAttivazioni, buttonClustering, buttonSimulazione, buttonAddRastrelliereFromFile]);
     }
-    abilitaPulsanti([buttonClustering]);
 }

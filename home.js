@@ -274,7 +274,6 @@ var btnSimulazione = L.Control.extend({
         buttonSimulazione.innerHTML = 'Avvia Simulazione';
         L.DomEvent.on(buttonSimulazione, 'click', function () {
             disabilitaPulsanti([buttonViewStorico, buttonReset, buttonAttivazioni, buttonClustering, buttonSimulazione, buttonAddRastrelliereFromFile]);
-            buttonSimulazione.innerHTML = 'Simulazione avviata!';
             dialogNumUtenti.addTo(mymap);             //Aggiungiamo il dialog alla pagina
             dialogNumUtenti.hideResize();
             dialogNumUtenti.freeze();
@@ -301,6 +300,7 @@ function avviaSimulazione() {
         dialogNumUtenti.remove();
         mymap.removeLayer(dialogNumUtenti);
         nascondiSimulazione = true;
+        buttonSimulazione.innerHTML = 'Simulazione avviata!';
         $.getScript("./start_simulation.js")
             .done(function (script, textStatus) {
                 console.log("Simulazione avviata!");
