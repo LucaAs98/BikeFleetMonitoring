@@ -304,41 +304,26 @@ app.post("/rastrelliere_file", (req, res) => {
 /* Facendo una richiesta "POST" ad URL "/geofence" si aggiunge tramite disegno una geofence. All'interno si distingue se
 *  è una geofence vietata oppure no. */
 app.post("/geofence", (req, res) => {
-    if (req.body.geoVietata === undefined) {
-        query_insert = 'INSERT INTO poi_geofence(name, geom, message) VALUES (' + apice + req.body.name + apice + ', ST_GeomFromGeoJSON(' + apice + req.body.geom + apice + ') , ' + apice + req.body.message + apice + ');'
-        client.query(query_insert, async (err, result) => {
-            if (err) {
-                console.log('Errore non sono riuscito ad aggiungere la geofence!');
-            } else {
-                /* Riprendo le geofence e se non ci sono stati errori rivado alla home. */
-                var response = await getGeofences().catch((err) => errore_completo = err);
 
-                if (!response) {
-                    console.log('Errore, non sono riuscito a caricare le geofence.' + '\n' + errore_completo);
-                } else {
-                    console.log('Geofence aggiunta!');
-                    res.redirect('/home');
-                }
-            }
-        });
-    } else {
-        query_insert = 'INSERT INTO areevietate_geofence(name, geom, message) VALUES (' + apice + req.body.name + apice + ', ST_GeomFromGeoJSON(' + apice + req.body.geom + apice + ') , ' + apice + req.body.message + apice + ');'
-        client.query(query_insert, async (err, result) => {
-            if (err) {
-                console.log('Errore non sono riuscito ad aggiungere la geofence vietata!');
-            } else {
-                /* Riprendo le geofence vietate e se non ci sono stati errori rivado alla home. */
-                var response = await getGeofencesVietate().catch((err) => errore_completo = err);
+    let vietata;
+    vietata = req.body.geoVietata === undefined;
+    query_insert = 'INSERT INTO geofence(name, geom, message, vietata) VALUES (' + apice + req.body.name + apice +
+        ', ST_GeomFromGeoJSON(' + apice + req.body.geom + apice + ') , ' + apice + req.body.message + apice + ',' + vietata+');'
+    client.query(query_insert, async (err, result) => {
+        if (err) {
+            console.log('Errore non sono riuscito ad aggiungere la geofence!');
+        } else {
+            /* Riprendo le geofence e se non ci sono stati errori rivado alla home. */
+            var response = await getAllGeofences().catch((err) => errore_completo = err);
 
-                if (!response) {
-                    console.log('Errore, non sono riuscito a caricare le geofence vietate.' + '\n' + errore_completo);
-                } else {
-                    console.log('Geofence vietata aggiunta!');
-                    res.redirect('/home');
-                }
+            if (!response) {
+                console.log('Errore, non sono riuscito a caricare le geofence.' + '\n' + errore_completo);
+            } else {
+                console.log('Geofence aggiunta!');
+                res.redirect('/home');
             }
-        });
-    }
+        }
+    });
 });
 
 /* Facendo una richiesta "POST" ad URL "/registrazione" si aggiunge un utente al database. */
@@ -499,11 +484,15 @@ function getRastrelliere() {
 }
 
 function getGeofences() {
-    return client.query('SELECT name, ST_AsGeoJSON(geom) AS geometry FROM poi_geofence');
+    return client.query('SELECT name, ST_AsGeoJSON(geom) AS geometry FROM geofence WHERE vietata = false');
 }
 
 function getGeofencesVietate() {
-    return client.query('SELECT name, ST_AsGeoJSON(geom) AS geometry FROM areevietate_geofence');
+    return client.query('SELECT name, ST_AsGeoJSON(geom) AS geometry FROM areevietate_geofence where vietata = true');
+}
+
+function getAllGeofences(){
+    return client.query('SELECT name, ST_AsGeoJSON(geom) AS geometry FROM geofence');
 }
 
 function getUsers() {
