@@ -145,7 +145,7 @@ async function avvia() {
             setTimeout(sendPositions, velocitaSimulazione);
         } else {
             buttonSimulazione.innerHTML = 'Avvia Simulazione';
-            abilitaPulsanti([buttonViewStorico, buttonReset, buttonAttivazioni, buttonClustering, buttonSimulazione, buttonAddRastrelliereFromFile]);
+            abilitaPulsanti([buttonViewStorico, buttonReset, buttonAttivazioni, buttonClustering, buttonSimulazione, buttonAddRastrelliereFromFile, buttonAddGeofenceFromFile]);
         }
     }
 }

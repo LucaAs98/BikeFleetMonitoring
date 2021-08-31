@@ -212,8 +212,13 @@ var btnViewStorico = L.Control.extend({
                     mymap.removeLayer(item);
                 }
 
-                if (window.heatmapLayer !== undefined)
+                if (window.heatmapLayer !== undefined){
                     mymap.removeLayer(window.heatmapLayer);
+                    window.geofence.addTo(mymap);
+                    window.geofenceVietate.addTo(mymap);
+                }
+
+
 
                 //Aggiungiamo nuovamente le rastrelliere alla mappa
                 window.clusterRastrelliere.addTo(mymap);

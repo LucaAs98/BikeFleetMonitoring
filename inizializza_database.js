@@ -4,11 +4,9 @@ async function inizializzaDatabase() {
     await fetch('/delete_inizializzazione', {
         method: 'POST',
     });
-    console.log("AAAAAAAAAAAAAAAAAAAA");
     const response = await fetch('/rastrelliere');
     let rastrelliereJSON = await response.json();
 
-    console.log(rastrelliereJSON);
     for (let ras of rastrelliereJSON) {
         Object.assign(ras, {
             id_bici: -1

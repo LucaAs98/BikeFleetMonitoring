@@ -255,12 +255,16 @@ function vediHeatmap() {
 
     //Aggiungiamo l'heatmap layer sulla nosra mappa
     window.heatmapLayer = L.heatLayer(coordinateHeatmap, {radius: 60}).addTo(mymap);
+    mymap.removeLayer(window.geofence);
+    mymap.removeLayer(window.geofenceVietate);
 
     /* Cambiamo il comportamento del bottone che clicchiamo per la visualizzazione dell'heatmap. Ora visualizzerà un altro
      * messaggio ed al suo click dovrà nascondere l'heatmap. */
     let htmlButton = document.getElementById('vediHeatmap');
     htmlButton.onclick = function () {
         rimuoviHeatmap(heatmapLayer);
+        window.geofence.addTo(mymap);
+        window.geofenceVietate.addTo(mymap);
     }
     htmlButton.textContent = "Nascondi Heatmap";
 }
