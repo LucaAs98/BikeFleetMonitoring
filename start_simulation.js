@@ -201,7 +201,7 @@ async function prenotaUtente(user) {
         cod: randomString(10, '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'),
         ras: ids.idRastr,
         geom: "",
-        maxSalti: random_number(5, 5)
+        maxSalti: random_number(5, 20)
     }
     user.prenotazione = prenotazione;
 
