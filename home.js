@@ -595,7 +595,7 @@ rimuoviDragBottone(buttonReset);
 var btnReset = L.Control.extend({
     onAdd: function () {
         let nascondiReset = false;
-        buttonReset.innerHTML = '<a href="/home" id="resetta_btn">Resetta database<a/>';
+        buttonReset.innerHTML = 'Resetta database';
         L.DomEvent.on(buttonReset, 'click', function () {
             disabilitaPulsanti([buttonViewStorico, buttonReset, buttonViewBikesRealTime, buttonDistanzaMaxRastrelliera, buttonAttivazioni, buttonClustering, buttonSimulazione, buttonAddRastrelliereFromFile, buttonAddGeofenceFromFile]);
             $.getScript("./inizializza_database.js")

@@ -172,6 +172,6 @@ async function getClustering() {
         alert("Non ci sono storici nelle date selezionate!");
         nascondiClustering = false;
         buttonClustering.innerHTML = 'Avvia Clustering';
-        abilitaPulsanti([buttonViewStorico, buttonReset, buttonViewBikesRealTime, buttonAttivazioni, buttonClustering, buttonSimulazione, buttonAddRastrelliereFromFile]);
+        abilitaPulsanti([buttonViewStorico, buttonReset, buttonViewBikesRealTime, buttonAttivazioni, buttonClustering, buttonSimulazione, buttonAddRastrelliereFromFile, buttonAddGeofenceFromFile]);
     }
 }

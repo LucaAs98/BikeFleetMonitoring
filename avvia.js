@@ -125,6 +125,7 @@ app.get("/lista_bici", async (req, res) => {
     if (!response) {
         console.log('Errore, non sono riuscito a caricare la lista delle bici.' + '\n' + errore_completo);
     } else {
+        console.log(response.rows);
         res.json(response.rows);
         console.log('Lista delle bici caricata con successo' + '\n');
     }
@@ -511,7 +512,7 @@ app.post("/clustering", async (req, res) => {
 });
 
 app.post("/delete_inizializzazione", async (req, res) => {
-    query_insert = 'TRUNCATE TABLE bicicletta RESTART IDENTITY CASCADE; DELETE FROM lista_bici_rastrelliera; DELETE FROM noleggio; DELETE FROM storico; DELETE FROM utente; DELETE FROM rastrelliere; DELETE FROM geofence';
+    query_insert = 'TRUNCATE TABLE bicicletta RESTART IDENTITY CASCADE; DELETE FROM lista_bici_rastrelliera; DELETE FROM noleggio; DELETE FROM storico; DELETE FROM utente;';
 
     client.query(query_insert, async (err, result) => {
         if (err) {
@@ -525,7 +526,6 @@ app.post("/delete_inizializzazione", async (req, res) => {
 
 //inserimento della bici nel database e poi viene assegnata a una rastrelliera
 app.post("/inizializza_database", async (req, res) => {
-
     try {
         await client.query('BEGIN')
         const query1 = 'INSERT INTO bicicletta(posizione) VALUES (ST_GeomFromText(' + apice + 'POINT(' + req.body.long + ' ' + req.body.lat + ')' + apice + '));'
