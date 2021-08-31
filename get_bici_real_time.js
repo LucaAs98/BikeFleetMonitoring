@@ -3,6 +3,7 @@ getBiciRealTime();
 async function getBiciRealTime() {
     const response = await fetch('/bici_real_time');
     const data = await response.json();
+
     if (!window.abortLoopBikesRealTime) {
         addRealTime(data);
     }
@@ -11,7 +12,7 @@ async function getBiciRealTime() {
 async function addRealTime(data) {
     var jsonFeatures = [];
 
-    const responseBiciFuoriRange = await fetch('/bici_fuori_range');
+    const responseBiciFuoriRange = await fetch('/bici_fuori_range?distanza=' + distanza);
     const biciFuoriRange = await responseBiciFuoriRange.json();
 
     data.forEach(function (point) {
@@ -48,7 +49,7 @@ async function addRealTime(data) {
         var color = 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png';
 
         for (var bici of biciFuoriRange) {
-            if (bici.id === feature.properties.id ) {
+            if (bici.id === feature.properties.id) {
                 color = 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png'
                 break;
             }

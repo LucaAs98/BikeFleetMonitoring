@@ -71,7 +71,7 @@ body > #sidebar {
     color: red;
 }
 
-.buttonVisualizzaStorico{
+.buttonVisualizzaStorico {
     margin-left: 80px;
 }
 
@@ -85,4 +85,58 @@ body > #sidebar {
 
 .form-check-label {
     margin-left: 10px;
+}
+
+.slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 25px;
+    background: #D3D3D3;
+    outline: none;
+    opacity: 0.7;
+    -webkit-transition: .2s;
+    transition: opacity .2s;
+}
+
+.slider:hover {
+    opacity: 1;
+}
+
+.slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 10px;
+    height: 25px;
+    background: #008bfd;
+    cursor: pointer;
+}
+
+.slider::-moz-range-thumb {
+    width: 10px;
+    height: 25px;
+    background: #008bfd;
+    cursor: pointer;
+}
+
+.sliderticks {
+    display: flex;
+    justify-content: space-between;
+    padding: 0 5px;
+}
+
+.sliderticks p {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    text-align: center;
+    width: 1px;
+    background: #D3D3D3;
+    height: 10px;
+    line-height: 40px;
+    margin: 0 0 15px 0;
+}
+
+.form-label {
+    font-size: 12px;
 }

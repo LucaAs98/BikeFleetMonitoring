@@ -28,7 +28,7 @@ const app = express();
 client.connect();
 
 app.use(express.static(__dirname));
-app.use(bodyParser.urlencoded({limit: '50mb', extended: true,  parameterLimit: 1000000}))
+app.use(bodyParser.urlencoded({limit: '50mb', extended: true, parameterLimit: 1000000}))
 app.use(fileUpload({
     createParentPath: true
 }));
@@ -177,7 +177,7 @@ app.get("/intersezione_geofence", async (req, res) => {
 
 /*Ad URL "/bici_fuori_range" avremo bici che risiedono al di fuori di una certa distanza dalla rastrelliera di partenza.*/
 app.get("/bici_fuori_range", async (req, res) => {
-    var response = await getBiciFuoriRange().catch((err) => errore_completo = err);
+    var response = await getBiciFuoriRange(req.query.distanza).catch((err) => errore_completo = err);
 
     if (!response) {
         console.log('Errore nella ricerca delle bici fuori range!.' + '\n' + errore_completo);
@@ -221,7 +221,7 @@ app.get("/insert_delay", async (req, res) => {
 
     if (!response) {
         console.log('Errore nell\'inserimento del delay!' + '\n' + errore_completo);
-    }else{
+    } else {
         console.log('Inserimento del ritardo avvenuto con successo!')
     }
 })
@@ -231,7 +231,7 @@ app.get("/stats_delay", async (req, res) => {
 
     if (!response) {
         console.log('Errore nel calcolo delle statistiche!' + '\n' + errore_completo);
-    }else{
+    } else {
         res.json(response.rows);
     }
 })
@@ -553,15 +553,15 @@ function getBiciRealTime() {
     return client.query('SELECT ST_X(posizione) AS long, ST_Y(posizione) AS lat, bicicletta.id FROM bicicletta, noleggio WHERE noleggio.iniziato = true AND noleggio.bicicletta = bicicletta.id AND codice NOT IN (SELECT noleggio FROM storico)');
 }
 
-function getBiciFuoriRange() {
+function getBiciFuoriRange(distanza) {
     return client.query('SELECT bicicletta.id\n' +
         '    FROM bicicletta, noleggio, rastrelliere, lista_bici_rastrelliera as lbr\n' +
         '    WHERE noleggio.iniziato = true\n' +
-        '    AND lbr.bicicletta = bicicletta.id\n'+
-        '    AND lbr.rastrelliera = rastrelliere.id\n'+
+        '    AND lbr.bicicletta = bicicletta.id\n' +
+        '    AND lbr.rastrelliera = rastrelliere.id\n' +
         '    AND noleggio.bicicletta = bicicletta.id\n' +
         '    AND codice NOT IN (SELECT noleggio FROM storico)\n' +
-        '    and ST_DistanceSphere(rastrelliere.geom, bicicletta.posizione) > 1500'
+        '    and ST_DistanceSphere(rastrelliere.geom, bicicletta.posizione) > ' + distanza + ';'
     )
 }
 
@@ -577,11 +577,11 @@ function getDatiNoleggio(codiceNoleggio) {
     return client.query('SELECT bicicletta, utente, data_inizio, data_fine FROM noleggio WHERE codice =' + apice + codiceNoleggio + apice + '   ORDER BY data_inizio');
 }
 
-function insertDelay(delay, user){
-    return client.query('Insert into delay (ritardo, utente) values ('+delay+', '+ apice + user + apice +')');
+function insertDelay(delay, user) {
+    return client.query('Insert into delay (ritardo, utente) values (' + delay + ', ' + apice + user + apice + ')');
 }
 
-function statsDelay(){
+function statsDelay() {
     return client.query('select *\n' +
         'from(\n' +
         '\tselect count(*) as numero_delay, round(avg(ritardo),2) as media, utente\n' +

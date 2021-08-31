@@ -84,7 +84,7 @@ $.getScript("./draw.js")
 
 /**** RASTRELLIERE DA FILE *****/
 var buttonAddRastrelliereFromFile = L.DomUtil.create('button', 'Aggiungi rastrelliere btn-block btn btn-light');
-
+rimuoviDragBottone(buttonAddRastrelliereFromFile);
 var optionsDialogRastrelliere = {
     size: [400, 150],
     minSize: [100, 100],
@@ -99,7 +99,7 @@ var btnAddRastrelliereFromFile = L.Control.extend({
     onAdd: function () {
         buttonAddRastrelliereFromFile.innerHTML = 'Aggiungi rastrelliere da file';
         L.DomEvent.on(buttonAddRastrelliereFromFile, 'click', function () {
-            disabilitaPulsanti([buttonViewStorico, buttonReset, buttonViewBikesRealTime, buttonAttivazioni, buttonClustering, buttonSimulazione, buttonAddRastrelliereFromFile])
+            disabilitaPulsanti([buttonViewStorico, buttonReset, buttonViewBikesRealTime, buttonDistanzaMaxRastrelliera, buttonAttivazioni, buttonClustering, buttonSimulazione, buttonAddRastrelliereFromFile])
             var dialog = L.control.dialog(optionsDialogRastrelliere)
                 .setContent(
                     '<form enctype="multipart/form-data"  id="formFile" action="/rastrelliere_file" method="POST">' +
@@ -134,6 +134,7 @@ var sidebar = L.control.sidebar('sidebar', {
 });
 
 var buttonViewStorico = L.DomUtil.create('button', 'Storico btn btn-light btn-block');
+rimuoviDragBottone(buttonViewStorico);
 //Bottone per vedere lo storico dei tragitti
 var btnViewStorico = L.Control.extend({
     onAdd: function () {
@@ -141,7 +142,7 @@ var btnViewStorico = L.Control.extend({
         buttonViewStorico.innerHTML = 'Visualizza storico tragitti';
         L.DomEvent.on(buttonViewStorico, 'click', async function () {
             if (!nascondiStorico) {
-                disabilitaPulsanti([buttonReset, buttonViewBikesRealTime, buttonAttivazioni, buttonClustering, buttonSimulazione, buttonAddRastrelliereFromFile]);                //Rimuoviamo le rastrelliere dalla mappa
+                disabilitaPulsanti([buttonReset, buttonViewBikesRealTime, buttonDistanzaMaxRastrelliera, buttonAttivazioni, buttonClustering, buttonSimulazione, buttonAddRastrelliereFromFile]);                //Rimuoviamo le rastrelliere dalla mappa
                 mymap.removeLayer(window.clusterRastrelliere);
                 buttonViewStorico.innerHTML = 'Nascondi tragitto';
                 await $.getScript("./get_storico.js")
@@ -161,7 +162,7 @@ var btnViewStorico = L.Control.extend({
                     });
             } else {
                 buttonViewStorico.innerHTML = 'Visualizza storico tragitti';
-                abilitaPulsanti([buttonReset, buttonViewBikesRealTime, buttonAttivazioni, buttonClustering, buttonSimulazione, buttonAddRastrelliereFromFile]);
+                abilitaPulsanti([buttonReset, buttonViewBikesRealTime, buttonDistanzaMaxRastrelliera, buttonAttivazioni, buttonClustering, buttonSimulazione, buttonAddRastrelliereFromFile]);
                 //Nascondiamo la sidebar e rimuoviamo tutti i layer presenti sulla mappa
                 setTimeout(function () {
                     sidebar.hide();
@@ -195,7 +196,13 @@ var viewStorico = (new btnViewStorico()).addTo(mymap);
 
 /**** BICI REAL-TIME *****/
 window.abortLoopBikesRealTime = false;
+let legendaBiciRealTime;
 var buttonViewBikesRealTime = L.DomUtil.create('button', 'Bici tempo reale btn btn-light btn-block');
+rimuoviDragBottone(buttonViewBikesRealTime);
+
+let buttonDistanzaMaxRastrelliera = L.DomUtil.create('button', 'distanza_max_rastrelliera btn btn-light btn-block');
+rimuoviDragBottone(buttonDistanzaMaxRastrelliera);
+
 //Bottone per vedere gli utenti in real time
 var btnViewBikesRealTime = L.Control.extend({
     onAdd: function () {
@@ -209,16 +216,43 @@ var btnViewBikesRealTime = L.Control.extend({
                 tid = setTimeout(getScriptBikeRealTime, 10);
                 nascondiBiciRealTime = true;
                 mymap.removeLayer(window.clusterRastrelliere);
+                aggiungiLegenda();
             } else {
                 buttonViewBikesRealTime.innerHTML = 'Visualizza bici noleggiate in tempo reale';
                 window.abortLoopBikesRealTime = true;
                 mymap.removeLayer(window.layerBiciRealTime);
                 nascondiBiciRealTime = false;
                 window.clusterRastrelliere.addTo(mymap);    //Ri-aggiungiamo le bici alla mappa
+                mymap.removeControl(legendaBiciRealTime);
             }
         });
         return buttonViewBikesRealTime;
     }
+});
+
+//Range distanza massima
+let distanza = 1500;
+var inputDistanzaMaxRastrelliera = L.Control.extend({
+    onAdd: function () {
+        buttonDistanzaMaxRastrelliera.innerHTML = '<label for="rangeDistanzaMassimaDaRastrelliera" id="sliderMaxDistance" class="form-label">Distanza massima da rastrelliera (' + distanza + 'km)</label>\n' +
+            '<input type="range" class="form-range slider" id="rangeDistanzaMassimaDaRastrelliera" value="' + distanza + '" min="1000" max="5000" step="100">' +
+            '<div class="sliderticks">\n' +
+            '    <p>1</p>\n' +
+            '    <p>1.5</p>\n' +
+            '    <p>2</p>\n' +
+            '    <p>2.5</p>\n' +
+            '    <p>3</p>\n' +
+            '    <p>3.5</p>\n' +
+            '    <p>4</p>\n' +
+            '    <p>4.5</p>\n' +
+            '    <p>5</p>\n' +
+            '  </div>'
+        L.DomEvent.on(buttonDistanzaMaxRastrelliera, 'input', function () {
+            distanza = document.getElementById("rangeDistanzaMassimaDaRastrelliera").value;
+            document.getElementById("sliderMaxDistance").innerHTML = "Distanza massima da rastrelliera (" + distanza + "km)";
+        });
+        return buttonDistanzaMaxRastrelliera;
+    },
 });
 
 function abortTimer(tid2) {
@@ -241,10 +275,38 @@ function getScriptBikeRealTime() {
 }
 
 var viewBikes = (new btnViewBikesRealTime()).addTo(mymap);
+var viewInputMaxDistanza = (new inputDistanzaMaxRastrelliera()).addTo(mymap);
 
+function aggiungiLegenda() {
+    legendaBiciRealTime = L.control({position: 'bottomleft'});
+
+    legendaBiciRealTime.onAdd = function () {
+        var div = L.DomUtil.create('div', 'info legend'),
+            grades = ["In range", "Fuori range"];
+
+        div.innerHTML = '<p>Legenda marker:</p>'
+
+
+        // loop through our density intervals and generate a label with a colored square for each interval
+        for (var i = 0; i < grades.length; i++) {
+            div.innerHTML +=
+                '<i style="background:' + getColorMarkerRange(grades[i]) + '"></i> ' + grades[i] + '<br>';
+        }
+        return div;
+    };
+
+    legendaBiciRealTime.addTo(mymap);
+}
+
+function getColorMarkerRange(colore) {
+    if (colore === "In range") {
+        return "#0a7201"
+    } else return "#ff0000"
+}
 
 /**** SIMULAZIONE *****/
 var buttonSimulazione = L.DomUtil.create('button', 'Simulazione btn btn-light btn-block');
+rimuoviDragBottone(buttonSimulazione);
 let nascondiSimulazione = false;
 var maxUtenti = 10;
 var maxIteration = 5;
@@ -314,6 +376,7 @@ function avviaSimulazione() {
 
 /**** CLUSTERING *****/
 var buttonClustering = L.DomUtil.create('button', 'Clustering btn btn-light btn-block');
+rimuoviDragBottone(buttonClustering);
 var maxCluster = 10;
 var dialogNumClusters;
 
@@ -349,13 +412,13 @@ var btnClustering = L.Control.extend({
         buttonClustering.innerHTML = 'Avvia Clustering';
         L.DomEvent.on(buttonClustering, 'click', function () {
             if (!nascondiClustering) {
-                disabilitaPulsanti([buttonViewStorico, buttonReset, buttonViewBikesRealTime, buttonAttivazioni, buttonClustering, buttonSimulazione, buttonAddRastrelliereFromFile])
+                disabilitaPulsanti([buttonViewStorico, buttonReset, buttonViewBikesRealTime, buttonDistanzaMaxRastrelliera, buttonAttivazioni, buttonClustering, buttonSimulazione, buttonAddRastrelliereFromFile])
                 dialogNumClusters.addTo(mymap);             //Aggiungiamo il dialog alla pagina
                 dialogNumClusters.hideResize();
                 dialogNumClusters.freeze();
                 dialogNumClusters.open();
             } else {
-                abilitaPulsanti([buttonViewStorico, buttonReset, buttonViewBikesRealTime, buttonAttivazioni, buttonClustering, buttonSimulazione, buttonAddRastrelliereFromFile]);
+                abilitaPulsanti([buttonViewStorico, buttonReset, buttonViewBikesRealTime, buttonDistanzaMaxRastrelliera, buttonAttivazioni, buttonClustering, buttonSimulazione, buttonAddRastrelliereFromFile]);
                 //Entriamo qui quando è stato terminato il clustering
                 buttonClustering.innerHTML = 'Avvia Clustering';
                 mymap.removeLayer(window.clusterKMEANS);    //Togliamo la clusterizzazione dalla mappa
@@ -395,7 +458,7 @@ function avviaScriptClustering() {
         if (document.getElementById('number_cluster').value < 0) {
             alert("Non puoi inserire una suddivisione in cluster minore di 0!");
         } else {
-            disabilitaPulsanti([buttonViewStorico, buttonReset, buttonViewBikesRealTime, buttonAttivazioni, buttonClustering, buttonSimulazione, buttonAddRastrelliereFromFile]);
+            disabilitaPulsanti([buttonViewStorico, buttonReset, buttonViewBikesRealTime, buttonDistanzaMaxRastrelliera, buttonAttivazioni, buttonClustering, buttonSimulazione, buttonAddRastrelliereFromFile]);
             //Rimuoviamo il dialog
             dialogNumClusters.remove();
             mymap.removeLayer(dialogNumClusters);
@@ -441,6 +504,7 @@ function disabilitaDateDialog() {
 
 /**** INTENSITA' ATTIVAZIONI GEOFENCE *****/
 var buttonAttivazioni = L.DomUtil.create('button', 'Attivazioni btn btn-light btn-block');
+rimuoviDragBottone(buttonAttivazioni);
 var btnViewAttivazioni = L.Control.extend({
     onAdd: function () {
         let nascondiAttivaz = false;
@@ -448,7 +512,7 @@ var btnViewAttivazioni = L.Control.extend({
         L.DomEvent.on(buttonAttivazioni, 'click', function () {
             if (!nascondiAttivaz) {
                 buttonAttivazioni.innerHTML = 'Nascondi intensità attivazioni geofence';
-                disabilitaPulsanti([buttonViewStorico, buttonReset, buttonViewBikesRealTime, buttonAttivazioni, buttonClustering, buttonSimulazione, buttonAddRastrelliereFromFile]);
+                disabilitaPulsanti([buttonViewStorico, buttonReset, buttonViewBikesRealTime, buttonDistanzaMaxRastrelliera, buttonAttivazioni, buttonClustering, buttonSimulazione, buttonAddRastrelliereFromFile]);
                 $.getScript("./get_intensita_attivazioni.js")
                     .done(function (script, textStatus) {
                         console.log("Caricamento attivazioni completato");
@@ -493,12 +557,13 @@ var viewAttivazioni = (new btnViewAttivazioni()).addTo(mymap);
 
 /**** RESET *****/
 var buttonReset = L.DomUtil.create('button', 'Inizializza btn btn-light btn-block');
+rimuoviDragBottone(buttonReset);
 var btnReset = L.Control.extend({
     onAdd: function () {
         let nascondiReset = false;
         buttonReset.innerHTML = 'Resetta database';
         L.DomEvent.on(buttonReset, 'click', function () {
-            disabilitaPulsanti([buttonViewStorico, buttonReset, buttonViewBikesRealTime, buttonAttivazioni, buttonClustering, buttonSimulazione, buttonAddRastrelliereFromFile]);
+            disabilitaPulsanti([buttonViewStorico, buttonReset, buttonViewBikesRealTime, buttonDistanzaMaxRastrelliera, buttonAttivazioni, buttonClustering, buttonSimulazione, buttonAddRastrelliereFromFile]);
             $.getScript("./inizializza_database.js")
                 .done(function (script, textStatus) {
                     console.log("Inizializzazione database completata");
@@ -516,7 +581,7 @@ var btnReset = L.Control.extend({
 var inizializza = (new btnReset()).addTo(mymap);
 
 L.DomEvent.on(mymap, "dialog:closed", function () {
-    abilitaPulsanti([buttonViewStorico, buttonReset, buttonViewBikesRealTime, buttonAttivazioni, buttonClustering, buttonSimulazione, buttonAddRastrelliereFromFile]);
+    abilitaPulsanti([buttonViewStorico, buttonReset, buttonViewBikesRealTime, buttonDistanzaMaxRastrelliera, buttonAttivazioni, buttonClustering, buttonSimulazione, buttonAddRastrelliereFromFile]);
 });
 
 function disabilitaPulsanti(arrayBottoni) {
@@ -529,4 +594,16 @@ function abilitaPulsanti(arrayBottoni) {
     for (let bottone of arrayBottoni) {
         bottone.disabled = false;
     }
+}
+
+function rimuoviDragBottone(bottone) {
+    // Disable dragging when user's cursor enters the element
+    bottone.addEventListener('mouseover', function () {
+        mymap.dragging.disable();
+    });
+
+// Re-enable dragging when user's cursor leaves the element
+    bottone.addEventListener('mouseout', function () {
+        mymap.dragging.enable();
+    });
 }
