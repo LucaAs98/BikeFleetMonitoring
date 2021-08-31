@@ -99,12 +99,12 @@ var btnAddRastrelliereFromFile = L.Control.extend({
     onAdd: function () {
         buttonAddRastrelliereFromFile.innerHTML = 'Aggiungi rastrelliere da file';
         L.DomEvent.on(buttonAddRastrelliereFromFile, 'click', function () {
-            disabilitaPulsanti([buttonViewStorico, buttonReset, buttonViewBikesRealTime, buttonDistanzaMaxRastrelliera, buttonAttivazioni, buttonClustering, buttonSimulazione, buttonAddRastrelliereFromFile])
+            disabilitaPulsanti([buttonViewStorico, buttonReset, buttonViewBikesRealTime, buttonDistanzaMaxRastrelliera, buttonAttivazioni, buttonClustering, buttonSimulazione, buttonAddRastrelliereFromFile, buttonAddGeofenceFromFile])
             var dialog = L.control.dialog(optionsDialogRastrelliere)
                 .setContent(
                     '<form enctype="multipart/form-data"  id="formFile" action="/rastrelliere_file" method="POST">' +
                     '<input type="file" name="file"  id="file" required><br>' +
-                    '<button onclick="doupload()" class="btn btn-primary btn-block" name="submit">Carica File</button>' +
+                    '<button onclick="caricaFile()" class="btn btn-primary btn-block" name="submit">Carica File</button>' +
                     '</form>\n'
                 ).addTo(mymap);
             dialog.hideResize();
@@ -117,15 +117,49 @@ var btnAddRastrelliereFromFile = L.Control.extend({
 
 var addRastrelliere = (new btnAddRastrelliereFromFile()).addTo(mymap);
 
-function doupload() {
+
+/**** Geofence DA FILE *****/
+var buttonAddGeofenceFromFile = L.DomUtil.create('button', 'Aggiungi Geofence btn-block btn btn-light');
+rimuoviDragBottone(buttonAddGeofenceFromFile);
+var optionsDialogGeofence = {
+    size: [400, 150],
+    minSize: [100, 100],
+    maxSize: [350, 350],
+    anchor: [100, 700],
+    position: "topleft",
+    initOpen: true
+}
+
+//Bottone per aggiungere Geofence da file
+var btnAddGeofenceFromFile = L.Control.extend({
+    onAdd: function () {
+        buttonAddGeofenceFromFile.innerHTML = 'Aggiungi geofence da file';
+        L.DomEvent.on(buttonAddGeofenceFromFile, 'click', function () {
+            disabilitaPulsanti([buttonViewStorico, buttonReset, buttonViewBikesRealTime, buttonDistanzaMaxRastrelliera, buttonAttivazioni, buttonClustering, buttonSimulazione, buttonAddRastrelliereFromFile, buttonAddGeofenceFromFile])
+            var dialog = L.control.dialog(optionsDialogGeofence)
+                .setContent(
+                    '<form enctype="multipart/form-data"  id="formFile" action="/geofence_file" method="POST">' +
+                    '<input type="file" name="file"  id="file" required><br>' +
+                    '<button onclick="caricaFile()" class="btn btn-primary btn-block" name="submit">Carica File</button>' +
+                    '</form>\n'
+                ).addTo(mymap);
+            dialog.hideResize();
+            dialog.freeze();
+            dialog.open();
+        });
+        return buttonAddGeofenceFromFile;
+    }
+});
+
+var addGeofence = (new btnAddGeofenceFromFile()).addTo(mymap);
+
+function caricaFile() {
     let entry = document.getElementById("file").files[0];
     console.log('doupload', entry)
     if (entry === undefined) {
         alert('Non hai selezionato nessun file da caricare!');
     }
 }
-
-
 /**** STORICO TRAGITTI *****/
 
 var sidebar = L.control.sidebar('sidebar', {
@@ -142,7 +176,7 @@ var btnViewStorico = L.Control.extend({
         buttonViewStorico.innerHTML = 'Visualizza storico tragitti';
         L.DomEvent.on(buttonViewStorico, 'click', async function () {
             if (!nascondiStorico) {
-                disabilitaPulsanti([buttonReset, buttonViewBikesRealTime, buttonDistanzaMaxRastrelliera, buttonAttivazioni, buttonClustering, buttonSimulazione, buttonAddRastrelliereFromFile]);                //Rimuoviamo le rastrelliere dalla mappa
+                disabilitaPulsanti([buttonReset, buttonViewBikesRealTime, buttonDistanzaMaxRastrelliera, buttonAttivazioni, buttonClustering, buttonSimulazione, buttonAddRastrelliereFromFile, buttonAddGeofenceFromFile]);                //Rimuoviamo le rastrelliere dalla mappa
                 mymap.removeLayer(window.clusterRastrelliere);
                 buttonViewStorico.innerHTML = 'Nascondi tragitto';
                 await $.getScript("./get_storico.js")
@@ -162,7 +196,7 @@ var btnViewStorico = L.Control.extend({
                     });
             } else {
                 buttonViewStorico.innerHTML = 'Visualizza storico tragitti';
-                abilitaPulsanti([buttonReset, buttonViewBikesRealTime, buttonDistanzaMaxRastrelliera, buttonAttivazioni, buttonClustering, buttonSimulazione, buttonAddRastrelliereFromFile]);
+                abilitaPulsanti([buttonReset, buttonViewBikesRealTime, buttonDistanzaMaxRastrelliera, buttonAttivazioni, buttonClustering, buttonSimulazione, buttonAddRastrelliereFromFile, buttonAddGeofenceFromFile]);
                 //Nascondiamo la sidebar e rimuoviamo tutti i layer presenti sulla mappa
                 setTimeout(function () {
                     sidebar.hide();
@@ -335,7 +369,7 @@ var btnSimulazione = L.Control.extend({
     onAdd: function () {
         buttonSimulazione.innerHTML = 'Avvia Simulazione';
         L.DomEvent.on(buttonSimulazione, 'click', function () {
-            disabilitaPulsanti([buttonViewStorico, buttonReset, buttonAttivazioni, buttonClustering, buttonSimulazione, buttonAddRastrelliereFromFile]);
+            disabilitaPulsanti([buttonViewStorico, buttonReset, buttonAttivazioni, buttonClustering, buttonSimulazione, buttonAddRastrelliereFromFile, buttonAddGeofenceFromFile]);
             dialogNumUtenti.addTo(mymap);             //Aggiungiamo il dialog alla pagina
             dialogNumUtenti.hideResize();
             dialogNumUtenti.freeze();
@@ -412,13 +446,13 @@ var btnClustering = L.Control.extend({
         buttonClustering.innerHTML = 'Avvia Clustering';
         L.DomEvent.on(buttonClustering, 'click', function () {
             if (!nascondiClustering) {
-                disabilitaPulsanti([buttonViewStorico, buttonReset, buttonViewBikesRealTime, buttonDistanzaMaxRastrelliera, buttonAttivazioni, buttonClustering, buttonSimulazione, buttonAddRastrelliereFromFile])
+                disabilitaPulsanti([buttonViewStorico, buttonReset, buttonViewBikesRealTime, buttonDistanzaMaxRastrelliera, buttonAttivazioni, buttonClustering, buttonSimulazione, buttonAddRastrelliereFromFile, buttonAddGeofenceFromFile])
                 dialogNumClusters.addTo(mymap);             //Aggiungiamo il dialog alla pagina
                 dialogNumClusters.hideResize();
                 dialogNumClusters.freeze();
                 dialogNumClusters.open();
             } else {
-                abilitaPulsanti([buttonViewStorico, buttonReset, buttonViewBikesRealTime, buttonDistanzaMaxRastrelliera, buttonAttivazioni, buttonClustering, buttonSimulazione, buttonAddRastrelliereFromFile]);
+                abilitaPulsanti([buttonViewStorico, buttonReset, buttonViewBikesRealTime, buttonDistanzaMaxRastrelliera, buttonAttivazioni, buttonClustering, buttonSimulazione, buttonAddRastrelliereFromFile, buttonAddGeofenceFromFile]);
                 //Entriamo qui quando è stato terminato il clustering
                 buttonClustering.innerHTML = 'Avvia Clustering';
                 mymap.removeLayer(window.clusterKMEANS);    //Togliamo la clusterizzazione dalla mappa
@@ -458,7 +492,7 @@ function avviaScriptClustering() {
         if (document.getElementById('number_cluster').value < 0) {
             alert("Non puoi inserire una suddivisione in cluster minore di 0!");
         } else {
-            disabilitaPulsanti([buttonViewStorico, buttonReset, buttonViewBikesRealTime, buttonDistanzaMaxRastrelliera, buttonAttivazioni, buttonClustering, buttonSimulazione, buttonAddRastrelliereFromFile]);
+            disabilitaPulsanti([buttonViewStorico, buttonReset, buttonViewBikesRealTime, buttonDistanzaMaxRastrelliera, buttonAttivazioni, buttonClustering, buttonSimulazione, buttonAddRastrelliereFromFile, buttonAddGeofenceFromFile]);
             //Rimuoviamo il dialog
             dialogNumClusters.remove();
             mymap.removeLayer(dialogNumClusters);
@@ -512,7 +546,7 @@ var btnViewAttivazioni = L.Control.extend({
         L.DomEvent.on(buttonAttivazioni, 'click', function () {
             if (!nascondiAttivaz) {
                 buttonAttivazioni.innerHTML = 'Nascondi intensità attivazioni geofence';
-                disabilitaPulsanti([buttonViewStorico, buttonReset, buttonViewBikesRealTime, buttonDistanzaMaxRastrelliera, buttonAttivazioni, buttonClustering, buttonSimulazione, buttonAddRastrelliereFromFile]);
+                disabilitaPulsanti([buttonViewStorico, buttonReset, buttonViewBikesRealTime, buttonDistanzaMaxRastrelliera, buttonAttivazioni, buttonClustering, buttonSimulazione, buttonAddRastrelliereFromFile, buttonAddGeofenceFromFile]);
                 $.getScript("./get_intensita_attivazioni.js")
                     .done(function (script, textStatus) {
                         console.log("Caricamento attivazioni completato");
@@ -556,14 +590,14 @@ var viewAttivazioni = (new btnViewAttivazioni()).addTo(mymap);
 
 
 /**** RESET *****/
-var buttonReset = L.DomUtil.create('button', 'Inizializza btn btn-light btn-block');
+var buttonReset = L.DomUtil.create('button', 'reset button btn btn-light btn-block');
 rimuoviDragBottone(buttonReset);
 var btnReset = L.Control.extend({
     onAdd: function () {
         let nascondiReset = false;
-        buttonReset.innerHTML = 'Resetta database';
+        buttonReset.innerHTML = '<a href="/home" id="resetta_btn">Resetta database<a/>';
         L.DomEvent.on(buttonReset, 'click', function () {
-            disabilitaPulsanti([buttonViewStorico, buttonReset, buttonViewBikesRealTime, buttonDistanzaMaxRastrelliera, buttonAttivazioni, buttonClustering, buttonSimulazione, buttonAddRastrelliereFromFile]);
+            disabilitaPulsanti([buttonViewStorico, buttonReset, buttonViewBikesRealTime, buttonDistanzaMaxRastrelliera, buttonAttivazioni, buttonClustering, buttonSimulazione, buttonAddRastrelliereFromFile, buttonAddGeofenceFromFile]);
             $.getScript("./inizializza_database.js")
                 .done(function (script, textStatus) {
                     console.log("Inizializzazione database completata");
@@ -581,7 +615,7 @@ var btnReset = L.Control.extend({
 var inizializza = (new btnReset()).addTo(mymap);
 
 L.DomEvent.on(mymap, "dialog:closed", function () {
-    abilitaPulsanti([buttonViewStorico, buttonReset, buttonViewBikesRealTime, buttonDistanzaMaxRastrelliera, buttonAttivazioni, buttonClustering, buttonSimulazione, buttonAddRastrelliereFromFile]);
+    abilitaPulsanti([buttonViewStorico, buttonReset, buttonViewBikesRealTime, buttonDistanzaMaxRastrelliera, buttonAttivazioni, buttonClustering, buttonSimulazione, buttonAddRastrelliereFromFile, buttonAddGeofenceFromFile]);
 });
 
 function disabilitaPulsanti(arrayBottoni) {

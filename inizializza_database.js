@@ -38,5 +38,5 @@ async function inizializzaDatabase() {
             });
         }
     }
-    abilitaPulsanti([buttonViewStorico, buttonReset, buttonViewBikesRealTime, buttonAttivazioni, buttonDistanzaMaxRastrelliera, buttonClustering, buttonSimulazione, buttonAddRastrelliereFromFile]);
+    abilitaPulsanti([buttonViewStorico, buttonReset, buttonViewBikesRealTime, buttonAttivazioni, buttonDistanzaMaxRastrelliera, buttonClustering, buttonSimulazione, buttonAddRastrelliereFromFile, buttonAddGeofenceFromFile]);
 }

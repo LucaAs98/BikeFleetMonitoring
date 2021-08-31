@@ -59,8 +59,8 @@ mymap.on(L.Draw.Event.CREATED, function (e) {
         layer.bindPopup('<h3>Per continuare inserisci il nome della geofence: </h3>' +
             '<form id="formGeofences" action="/geofence" method="POST">\n' +
             '   <label for="name">Nome:</label><br>\n' +
-            '   <input type="text" id="name" name="name" placeholder="Inserisci qui il nome..."><br><br>\n' +
-            '   <textarea id="message" name="message" rows="4" placeholder="Inserisci qui il messaggio da visualizzare quando si entra nella rastrelliera..." required></textarea><br><br>\n' +
+            '   <input type="text" id="name" name="name" placeholder="Inserisci qui il nome..." required><br><br>\n' +
+            '   <textarea id="message" name="message" rows="4" placeholder="Inserisci qui il messaggio da visualizzare quando si entra nella rastrelliera..."></textarea><br><br>\n' +
             '   <input type="hidden" id="geom" name="geom" value=' + JSON.stringify(myGeoJSON) + '>' +
             '   <label for="geoVietata">Vietata:</label>' +
             '   <input type="hidden" id="geofence" name="geofence" value="true">' +
