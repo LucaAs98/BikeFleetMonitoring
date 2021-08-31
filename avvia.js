@@ -240,7 +240,8 @@ app.get("/stats_delay", async (req, res) => {
 /* Facendo una richiesta "POST" ad URL "/prenota" si effettua il noleggio di una bici con i dati passati al body. */
 
 app.post("/prenota", (req, res) => {
-    client.query('INSERT INTO noleggio(codice, bicicletta, utente, data_inizio, iniziato, rastrelliera) VALUES(' + apice + req.body.cod + apice + ',' + req.body.bici + ',' + apice + req.body.utente + apice + ',' + apice + req.body.di + apice + ',' + false + ',' + req.body.ras + ')', (err, result) => {
+
+    client.query('INSERT INTO noleggio(codice, bicicletta, utente, data_inizio, iniziato) VALUES(' + apice + req.body.cod + apice + ',' + req.body.bici + ',' + apice + req.body.utente + apice + ',' + apice + req.body.di + apice + ',' + false + ')', (err, result) => {
         if (err) {
             console.log('Errore durante la prenotazione!' + err);
         } else {
@@ -554,9 +555,10 @@ function getBiciRealTime() {
 
 function getBiciFuoriRange() {
     return client.query('SELECT bicicletta.id\n' +
-        '    FROM bicicletta, noleggio, rastrelliere\n' +
+        '    FROM bicicletta, noleggio, rastrelliere, lista_bici_rastrelliera as lbr\n' +
         '    WHERE noleggio.iniziato = true\n' +
-        '    AND rastrelliere.id = noleggio.rastrelliera\n' +
+        '    AND lbr.bicicletta = bicicletta.id\n'+
+        '    AND lbr.rastrelliera = rastrelliere.id\n'+
         '    AND noleggio.bicicletta = bicicletta.id\n' +
         '    AND codice NOT IN (SELECT noleggio FROM storico)\n' +
         '    and ST_DistanceSphere(rastrelliere.geom, bicicletta.posizione) > 1500'

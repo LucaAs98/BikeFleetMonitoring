@@ -111,6 +111,7 @@ async function avvia() {
 
                 user.terminazione.coordinate = coordinates;
 
+
                 for (let property in coordinates) {
                     let encodedKey = encodeURIComponent(property);
                     let encodedValue = encodeURIComponent(coordinates[property]);
@@ -212,7 +213,7 @@ async function prenotaUtente(user) {
         formBody.push(encodedKey + "=" + encodedValue);
     }
     formBody = formBody.join("&");
-
+    console.log(prenotazione)
     fetch('/prenota', {
         method: 'POST',
         headers: {
@@ -220,6 +221,7 @@ async function prenotaUtente(user) {
         },
         body: formBody,
     });
+    console.log(prenotazione)
 }
 
 //Metodo per far partire il noleggio da parte di un utente
