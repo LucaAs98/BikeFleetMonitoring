@@ -630,17 +630,17 @@ function getDatiNoleggio(codiceNoleggio) {
 }
 
 function insertDelay(delay, user) {
-    return client.query('Insert into delay (ritardo, utente) values (' + delay + ', ' + apice + user + apice + ')');
+    return client.query('Insert into delay (delay, utente) values (' + delay + ', ' + apice + user + apice + ')');
 }
 
 function statsDelay() {
     return client.query('select *\n' +
         'from(\n' +
-        '\tselect count(*) as numero_delay, round(avg(ritardo),2) as media, utente\n' +
+        '\tselect count(*) as numero_delay, round(avg(delay),2) as media, utente\n' +
         '\tfrom delay\n' +
         '\tgroup by utente\n' +
         '\tunion\n' +
-        '\tselect count(*) as numero_delay, round(avg(ritardo),2) as media, \'Tutti\' as utente\n' +
+        '\tselect count(*) as numero_delay, round(avg(delay),2) as media, \'Tutti\' as utente\n' +
         '\tfrom delay\n' +
         ') as t1\n' +
         'order by utente');
