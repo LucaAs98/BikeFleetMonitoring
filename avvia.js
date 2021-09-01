@@ -156,11 +156,12 @@ app.get("/checkDistance", async (req, res) => {
 
 /* Ad URL "/rastrelliera_corrispondente" avremo l'id della rastrelliera in cui è contenuta una determinata bici. */
 app.get("/rastrelliera_corrispondente", async (req, res) => {
-    var response = await getRastrellieraFromBici(req.query.bici).catch((err) => errore_completo = err);
+    var response = await getRastrellieraFromBici(req.query.bici, req.query.codP).catch((err) => errore_completo = err);
 
     if (!response) {
         console.log('Errore nella ricerca della rastrelliera!.' + '\n' + errore_completo);
     } else {
+        console.log('Vada!.' + '\n' + errore_completo);
         res.json(response.rows)
     }
 });
@@ -588,8 +589,16 @@ function getRastrellieraVicino(longitudine, latitudine) {
 
 }
 
-function getRastrellieraFromBici(bici) {
-    return client.query('SELECT rastrelliera FROM lista_bici_rastrelliera WHERE bicicletta = ' + bici + ';');
+function getRastrellieraFromBici(bici, codp) {
+
+    let query ='SELECT rastrelliera, data_inizio FROM lista_bici_rastrelliera, noleggio ' +
+        'WHERE lista_bici_rastrelliera.bicicletta = ' + bici + ' ' +
+        'AND noleggio.codice ='+apice + codp+ apice+ ' ' +
+        'and noleggio.bicicletta = lista_bici_rastrelliera.bicicletta ;'
+
+    console.log(query);
+
+    return client.query(query);
 }
 
 function getIntersezioneGeofence(longitudine, latitudine) {
