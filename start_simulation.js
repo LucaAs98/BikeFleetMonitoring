@@ -1,4 +1,4 @@
-var velocitaSimulazione = 500;
+var velocitaSimulazione = 500;      //Quanto aspetta prima di aggiungere nuove posizioni
 
 avvia();
 
@@ -93,7 +93,6 @@ async function avvia() {
 
                     long = coordinate[0];                   //Longitudine di spostamento successivo
                     lat = coordinate[1];                    //Latitudine di spostamento successivo
-
                 }
 
                 //Creazione della stringa con tutte le geometrie
@@ -213,7 +212,6 @@ async function prenotaUtente(user) {
         formBody.push(encodedKey + "=" + encodedValue);
     }
     formBody = formBody.join("&");
-    console.log(prenotazione)
     fetch('/prenota', {
         method: 'POST',
         headers: {
@@ -221,12 +219,11 @@ async function prenotaUtente(user) {
         },
         body: formBody,
     });
-    console.log(prenotazione)
 }
 
 //Metodo per far partire il noleggio da parte di un utente
 async function startNoleggio(user) {
-    let noleggio = {                    //Creiamo l'oggetto del noleggio per passare i suoi ati al body della richiesta
+    let noleggio = {                    //Creiamo l'oggetto del noleggio per passare i suoi dati al body della richiesta
         codNoleggio: user.prenotazione.cod,
     }
 
@@ -264,7 +261,7 @@ async function controlloTerminazione(user) {
 
 //Facciamo terminare il noleggio.
 async function terminaNoleggio(id, user) {
-    //Salviamo i dai per concludere il noleggio, in modo tale da passarli al body della richiesta
+    //Salviamo i dati per concludere il noleggio, in modo tale da passarli al body della richiesta
     let noleggioTerminato = {
         codNoleggio: user.prenotazione.cod,
         bici: user.prenotazione.bici,
@@ -289,7 +286,7 @@ async function terminaNoleggio(id, user) {
         body: formBody,
     });
 
-    //Sottraiamo il numero di esecuzioni ch erestano all'utente
+    //Sottraiamo il numero di esecuzioni che restano all'utente
     user.nEsecuzioni -= 1;
 
     //Se l'utente ha ancora esecuzionni disponibili resettiamo i suoi dati

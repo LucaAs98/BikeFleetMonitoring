@@ -253,7 +253,7 @@ function vediHeatmap() {
         }
     }
 
-    //Aggiungiamo l'heatmap layer sulla nosra mappa
+    //Aggiungiamo l'heatmap layer sulla nostra mappa
     window.heatmapLayer = L.heatLayer(coordinateHeatmap, {radius: 60}).addTo(mymap);
     mymap.removeLayer(window.geofence);
     mymap.removeLayer(window.geofenceVietate);

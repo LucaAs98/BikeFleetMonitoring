@@ -92,21 +92,3 @@ function getCoordinateFromArray(arrayLatLng) {
 
     return StrCoordinate;
 }
-
-
-/*function inviaDati(layer) {
-
-    fetch('/rastrelliere', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            rastrelliera: {
-                lat: layer.getLatLng().lat,
-                lng: layer.getLatLng().lng,
-                nome:
-            }
-        })
-    });
-}*/

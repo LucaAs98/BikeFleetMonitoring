@@ -155,13 +155,12 @@ var addGeofence = (new btnAddGeofenceFromFile()).addTo(mymap);
 
 function caricaFile() {
     let entry = document.getElementById("file").files[0];
-    console.log('doupload', entry)
     if (entry === undefined) {
         alert('Non hai selezionato nessun file da caricare!');
     }
 }
-/**** STORICO TRAGITTI *****/
 
+/**** STORICO TRAGITTI *****/
 var sidebar = L.control.sidebar('sidebar', {
     closeButton: false,
     position: 'left',
@@ -234,7 +233,7 @@ var viewStorico = (new btnViewStorico()).addTo(mymap);
 
 
 /**** BICI REAL-TIME *****/
-window.abortLoopBikesRealTime = false;
+window.abortLoopBikesRealTime = false;    //Flag per determinare se dobbiamo continuare ad aggiornare la visualizzazione delle bici
 let legendaBiciRealTime;
 var buttonViewBikesRealTime = L.DomUtil.create('button', 'Bici tempo reale btn btn-light btn-block');
 rimuoviDragBottone(buttonViewBikesRealTime);
@@ -387,9 +386,11 @@ var btnSimulazione = L.Control.extend({
 var viewSimulazione = (new btnSimulazione()).addTo(mymap);
 
 function avviaSimulazione() {
+    //Prendiamo i dati dal form
     window.htmlInputUtenti = document.getElementById('number_users');
     window.htmlInputIterazioni = document.getElementById('number_iteration');
 
+    //Controlliamo che i dati inseriti siano corretti
     if (htmlInputUtenti.value > maxUtenti) {
         alert("Gli utenti non possono essere più di " + maxUtenti + "!")
     } else if (htmlInputIterazioni.value > maxIteration) {
@@ -494,8 +495,8 @@ function avviaScriptClustering() {
     if (document.getElementById('number_cluster').value > maxCluster) {
         alert("Non puoi inserire una suddivisione in cluster maggiore di " + maxCluster + "!");
     } else {
-        if (document.getElementById('number_cluster').value < 0) {
-            alert("Non puoi inserire una suddivisione in cluster minore di 0!");
+        if (document.getElementById('number_cluster').value <= 0) {
+            alert("Non puoi inserire una suddivisione in cluster minore di 1!");
         } else {
             disabilitaPulsanti([buttonViewStorico, buttonReset, buttonViewBikesRealTime, buttonDistanzaMaxRastrelliera, buttonAttivazioni, buttonClustering, buttonSimulazione, buttonAddRastrelliereFromFile, buttonAddGeofenceFromFile]);
             //Rimuoviamo il dialog

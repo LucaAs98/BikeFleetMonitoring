@@ -2,7 +2,7 @@
 *  Con le chiamate "get" mettiamo sulla schermata tutti i dati in formato JSON. Esempio: ci servono le rastrelliere in un altro
 * script. Cosa facciamo? La fetch dell'url corrispondente a dove abbiamo la get.
 * Con le chiamate POST, invece, passiamo i dati da un altro script al database. Vogliamo aggiungere rastrelliere? Facciamo una chiamata POST
-* all'URL che ci permette di aggiungerle, ad esempio "/rastrelliere". Successivamente ad ogni richiesta POST si fa una redirect all'URL della home.*/
+* all'URL che ci permette di aggiungerle, ad esempio "/rastrelliere". Successivamente ad ogni richiesta POST si fa una redirect all'URL della home. */
 var apice = "\'";
 var errore_completo;
 var query_insert = "";
@@ -14,7 +14,6 @@ const express = require("express");
 var bodyParser = require('body-parser');
 const fileUpload = require('express-fileupload');
 const open = require('open');
-const clustering = require("density-clustering");
 
 const client = new Client({
     user: 'postgres',
@@ -125,13 +124,12 @@ app.get("/lista_bici", async (req, res) => {
     if (!response) {
         console.log('Errore, non sono riuscito a caricare la lista delle bici.' + '\n' + errore_completo);
     } else {
-        console.log(response.rows);
         res.json(response.rows);
         console.log('Lista delle bici caricata con successo' + '\n');
     }
 });
 
-/* Ad URL "/vis_pren" avremo il JSON del codice di prenotazione.*/
+/* Ad URL "/vis_pren" avremo il JSON del codice di prenotazione, la bicicletta e se il noleggio è iniziato o meno, dato lo username utente. */
 app.get("/vis_pren", async (req, res) => {
     var response = await getPrenotazione(apice + req.query.cod_u + apice).catch((err) => errore_completo = err);
 
@@ -143,7 +141,7 @@ app.get("/vis_pren", async (req, res) => {
     }
 });
 
-/* Ad URL "/checkDistance" avremo l'id della rastrelliera a meno di 5 metri dall'utente. */
+/* Ad URL "/checkDistance" avremo l'id della rastrelliera a meno di tot metri dall'utente. */
 app.get("/checkDistance", async (req, res) => {
     var response = await getRastrellieraVicino(req.query.lng, req.query.lat).catch((err) => errore_completo = err);
 
@@ -154,19 +152,21 @@ app.get("/checkDistance", async (req, res) => {
     }
 });
 
-/* Ad URL "/rastrelliera_corrispondente" avremo l'id della rastrelliera in cui è contenuta una determinata bici. */
+/* Ad URL "/rastrelliera_corrispondente" avremo l'id della rastrelliera in cui è contenuta una determinata bici. Serve per il noleggio
+* quando va a sbloccare la bici per verificare se l'utente può noleggiare la bici sia per quanto riguarda la vicinanza alla
+* rastrelliera sia per quanto riguarda la data di inizio del noleggio. */
 app.get("/rastrelliera_corrispondente", async (req, res) => {
     var response = await getRastrellieraFromBici(req.query.bici, req.query.codP).catch((err) => errore_completo = err);
 
     if (!response) {
         console.log('Errore nella ricerca della rastrelliera!.' + '\n' + errore_completo);
     } else {
-        console.log('Vada!.' + '\n' + errore_completo);
+        console.log('Ricerca della rastrelliera andata a buon fine!.');
         res.json(response.rows)
     }
 });
 
-/* Ad URL "/intersezione_geofence" avremo la geofence intersecata dall'utente.*/
+/* Ad URL "/intersezione_geofence" avremo la geofence intersecata dall'utente. */
 app.get("/intersezione_geofence", async (req, res) => {
     var response = await getIntersezioneGeofence(req.query.lng, req.query.lat).catch((err) => errore_completo = err);
 
@@ -177,7 +177,7 @@ app.get("/intersezione_geofence", async (req, res) => {
     }
 });
 
-/*Ad URL "/bici_fuori_range" avremo bici che risiedono al di fuori di una certa distanza dalla rastrelliera di partenza.*/
+/*Ad URL "/bici_fuori_range" avremo bici che risiedono al di fuori di una certa distanza dalla rastrelliera di partenza. */
 app.get("/bici_fuori_range", async (req, res) => {
     var response = await getBiciFuoriRange(req.query.distanza).catch((err) => errore_completo = err);
 
@@ -188,6 +188,7 @@ app.get("/bici_fuori_range", async (req, res) => {
     }
 })
 
+/* Restituisce il numero di rastrelliere presenti nel db */
 app.get("/n_rastrelliere", async (req, res) => {
     var response = await getNRastrelliere().catch((err) => errore_completo = err);
 
@@ -198,6 +199,7 @@ app.get("/n_rastrelliere", async (req, res) => {
     }
 })
 
+/* Dato l'id di una rastrelliera restituisce la longitudine e la latitudine di essa. */
 app.get("/pos_rastr", async (req, res) => {
     var response = await getPosRastr(req.query.id).catch((err) => errore_completo = err);
 
@@ -208,6 +210,7 @@ app.get("/pos_rastr", async (req, res) => {
     }
 })
 
+/* Restituisce i dati del noleggio dato il codice. */
 app.get("/get_dati_noleggio", async (req, res) => {
     var response = await getDatiNoleggio(req.query.codice_noleggio).catch((err) => errore_completo = err);
 
@@ -218,6 +221,7 @@ app.get("/get_dati_noleggio", async (req, res) => {
     }
 })
 
+/* Serve per inserire il delay della notifica. Inserisce anche il nome dell'utente. */
 app.get("/insert_delay", async (req, res) => {
     var response = await insertDelay(req.query.delay, req.query.user).catch((err) => errore_completo = err);
 
@@ -228,6 +232,7 @@ app.get("/insert_delay", async (req, res) => {
     }
 })
 
+/* Restituisce le statistiche dei delay delle notifiche. */
 app.get("/stats_delay", async (req, res) => {
     var response = await statsDelay().catch((err) => errore_completo = err);
 
@@ -240,7 +245,6 @@ app.get("/stats_delay", async (req, res) => {
 
 /*** Richieste POST ***/
 /* Facendo una richiesta "POST" ad URL "/prenota" si effettua il noleggio di una bici con i dati passati al body. */
-
 app.post("/prenota", (req, res) => {
 
     client.query('INSERT INTO noleggio(codice, bicicletta, utente, data_inizio, iniziato) VALUES(' + apice + req.body.cod + apice + ',' + req.body.bici + ',' + apice + req.body.utente + apice + ',' + apice + req.body.di + apice + ',' + false + ')', (err, result) => {
@@ -420,8 +424,7 @@ app.post("/addPosizione", async (req, res) => {
 
 });
 
-/* Facendo una richiesta "POST" ad URL "/avvia_noleggio" si aggiorna lo stato del noleggio di una bicicletta in particolare
- e successivamente si cancella tale bici dalla rastrelliera in cui era contenuta. */
+/* Facendo una richiesta "POST" ad URL "/avvia_noleggio" si aggiorna lo stato del noleggio di una bicicletta in particolare. */
 app.post("/avvia_noleggio", (req, res) => {
     query_insert = 'UPDATE noleggio SET iniziato = ' + true + ' where codice = ' + apice + req.body.codNoleggio + apice + ';'
     client.query(query_insert, async (err, result) => {
@@ -435,7 +438,7 @@ app.post("/avvia_noleggio", (req, res) => {
 });
 
 /* Facendo una richiesta "POST" ad URL "/termina_noleggio" se tutte le query scritte non danno problemi si fa terminare il noleggio
-* di una determinata bici. É particolare perchè viene effettuata una transizione. */
+* di una determinata bici. É particolare perchè viene effettuata una transazione. */
 app.post("/termina_noleggio", async (req, res) => {
     try {
         await client.query('BEGIN')
@@ -471,19 +474,7 @@ app.post("/cancella_prenotazione", async (req, res) => {
     });
 });
 
-/* Facendo una richiesta "POST" ad URL "/cancella_prenotazione" si rimuove la prenotazione dal db. */
-app.post("/popola_rastrelliere", async (req, res) => {
-    query_insert = 'DELETE FROM noleggio WHERE codice = ' + apice + req.body.cod_prenotazione + apice + ';';
-
-    client.query(query_insert, async (err, result) => {
-        if (err) {
-            console.log('Errore nella cancellazione della prenotazione.' + '\n' + errore_completo);
-        } else {
-            console.log('Cancellazione prenotazione effettuata');
-        }
-    });
-});
-
+/* Facendo una richiesta "POST" ad URL "/clustering" si effettua il clustering e si restituiscono le posizioni delle biciclette clusterizzate. */
 app.post("/clustering", async (req, res) => {
     var dataset = req.body;
     var k_clusters = parseInt(dataset.numClusters);
@@ -512,6 +503,7 @@ app.post("/clustering", async (req, res) => {
     res.json(JSONClusters);
 });
 
+/* Facendo una richiesta "POST" ad URL "/delete_inizializzazione" si effettua la cancellazione delle bici dal database, dei noleggi, della tabella lista_bici_rastrelliera e degli utenti. */
 app.post("/delete_inizializzazione", async (req, res) => {
     query_insert = 'TRUNCATE TABLE bicicletta RESTART IDENTITY CASCADE; DELETE FROM lista_bici_rastrelliera; DELETE FROM noleggio; DELETE FROM storico; DELETE FROM utente;';
 
@@ -525,7 +517,7 @@ app.post("/delete_inizializzazione", async (req, res) => {
     res.end();
 });
 
-//inserimento della bici nel database e poi viene assegnata a una rastrelliera
+// Inserimento della bici nel database e poi viene assegnata a una rastrelliera
 app.post("/inizializza_database", async (req, res) => {
     try {
         await client.query('BEGIN')
@@ -579,31 +571,27 @@ function getPrenotazione(cod_u) {
 }
 
 function getRastrellieraVicino(longitudine, latitudine) {
-
     let query1 = 'SELECT a1.id FROM rastrelliere AS A1 WHERE ST_Distance(A1.geom::geography, ST_GeomFromText(' +
         apice + 'POINT(' + longitudine + ' ' + latitudine + ')' + apice + ')::geography) <= 75 order by ' +
         'ST_Distance(A1.geom::geography, ST_GeomFromText(' +
         apice + 'POINT(' + longitudine + ' ' + latitudine + ')' + apice + ')::geography)';
 
     return client.query(query1);
-
 }
 
 function getRastrellieraFromBici(bici, codp) {
 
-    let query ='SELECT rastrelliera, data_inizio FROM lista_bici_rastrelliera, noleggio ' +
+    let query = 'SELECT rastrelliera, data_inizio FROM lista_bici_rastrelliera, noleggio ' +
         'WHERE lista_bici_rastrelliera.bicicletta = ' + bici + ' ' +
-        'AND noleggio.codice ='+apice + codp+ apice+ ' ' +
+        'AND noleggio.codice =' + apice + codp + apice + ' ' +
         'and noleggio.bicicletta = lista_bici_rastrelliera.bicicletta ;'
-
-    console.log(query);
 
     return client.query(query);
 }
 
 function getIntersezioneGeofence(longitudine, latitudine) {
     return client.query('Select G1.name,G1.message,G1.vietata AS vietato  from geofence as G1  where ST_Contains(G1.geom, ST_GeomFromText(' +
-        apice + 'POINT(' + longitudine + ' ' + latitudine + ')' + apice + ')::geography::geometry) order by vietata DESC,name ;');
+        apice + 'POINT(' + longitudine + ' ' + latitudine + ')' + apice + ')::geography::geometry) ORDER BY vietata DESC,name ;');
 }
 
 function getStorico() {
@@ -616,18 +604,18 @@ function getBiciRealTime() {
 
 function getBiciFuoriRange(distanza) {
     return client.query('SELECT bicicletta.id\n' +
-        '    FROM bicicletta, noleggio, rastrelliere, lista_bici_rastrelliera as lbr\n' +
+        '    FROM bicicletta, noleggio, rastrelliere, lista_bici_rastrelliera AS lbr\n' +
         '    WHERE noleggio.iniziato = true\n' +
         '    AND lbr.bicicletta = bicicletta.id\n' +
         '    AND lbr.rastrelliera = rastrelliere.id\n' +
         '    AND noleggio.bicicletta = bicicletta.id\n' +
         '    AND codice NOT IN (SELECT noleggio FROM storico)\n' +
-        '    and ST_DistanceSphere(rastrelliere.geom, bicicletta.posizione) > ' + distanza + ';'
+        '    AND ST_DistanceSphere(rastrelliere.geom, bicicletta.posizione) > ' + distanza + ';'
     )
 }
 
 function getNRastrelliere() {
-    return client.query('select count(*)as n_rastrelliere from rastrelliere;')
+    return client.query('select count(*) as n_rastrelliere from rastrelliere;')
 }
 
 function getPosRastr(id) {
@@ -643,16 +631,16 @@ function insertDelay(delay, user) {
 }
 
 function statsDelay() {
-    return client.query('select *\n' +
-        'from(\n' +
-        '\tselect count(*) as numero_delay, round(avg(delay),2) as media, utente\n' +
-        '\tfrom delay\n' +
-        '\tgroup by utente\n' +
-        '\tunion\n' +
-        '\tselect count(*) as numero_delay, round(avg(delay),2) as media, \'Tutti\' as utente\n' +
-        '\tfrom delay\n' +
-        ') as t1\n' +
-        'order by utente');
+    return client.query('SELECT *\n' +
+        'FROM(\n' +
+        '\tSELECT count(*) AS numero_delay, round(avg(delay),2) AS media, utente\n' +
+        '\tFROM delay\n' +
+        '\tGROUP BY utente\n' +
+        '\tUNION\n' +
+        '\tSELECT count(*) AS numero_delay, round(avg(delay),2) AS media, \'Tutti\' AS utente\n' +
+        '\tFROM delay\n' +
+        ') AS t1\n' +
+        'ORDER BY utente');
 }
 
 // All'avvio apriamo la home con il browser di default.
