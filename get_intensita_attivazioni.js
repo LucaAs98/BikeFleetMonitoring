@@ -29,14 +29,11 @@ async function addIntensitaAttivazioni(data) {
         };
     }
 
-    //Provare a velocizzare il tutto, questo fa rallentare la visualizzazione
     for (const lineString of data) {
         var geometry = JSON.parse(lineString.geometry);
         var geofenceIntersecate = [];
         var prevGeof = [];       //Geofence intersecata in precedenza
         for (var point of geometry.coordinates) {
-
-
             var coordinates = {
                 lng: point[0],
                 lat: point[1],

@@ -9,15 +9,15 @@ async function getClustering() {
 
     for (let itemStorico of datiStorico) {
         responseDatiNoleggio = await fetch('/get_dati_noleggio?codice_noleggio=' + itemStorico.codice);  //Richiediamo i dati del noleggio
+
         let data = await responseDatiNoleggio.json();
         if (window.htmlCheckbox.checked) {
-            let dateTimeInizio = new Date(data[0].data_inizio).getDate() + "-" + (new Date(data[0].data_inizio).getMonth() + 1) + "-" + new Date(data[0].data_inizio).getFullYear();
-            let dateTimeFine = new Date(data[0].data_fine).getDate() + "-" + (new Date(data[0].data_fine).getMonth() + 1) + "-" + new Date(data[0].data_fine).getFullYear();
-            let dataInizioHtml = new Date(window.htmlInputDataInizio.value).getDate() + "-" + (new Date(window.htmlInputDataInizio.value).getMonth() + 1) + "-" + new Date(window.htmlInputDataInizio.value).getFullYear();
-            let dataFineHtml = new Date(window.htmlInputDataFine.value).getDate() + "-" + (new Date(window.htmlInputDataFine.value).getMonth() + 1) + "-" + new Date(window.htmlInputDataFine.value).getFullYear();
+            let dateTimeInizio = new Date(new Date(data[0].data_inizio).getFullYear(), (new Date(data[0].data_inizio).getMonth()), new Date(data[0].data_inizio).getDate());
+            let dateTimeFine = new Date(new Date(data[0].data_fine).getFullYear(), (new Date(data[0].data_fine).getMonth()), new Date(data[0].data_fine).getDate());
+            let dataInizioHtml = new Date(new Date(window.htmlInputDataInizio.value).getFullYear(), (new Date(window.htmlInputDataInizio.value).getMonth()), new Date(window.htmlInputDataInizio.value).getDate());
+            let dataFineHtml = new Date(new Date(window.htmlInputDataFine.value).getFullYear(), (new Date(window.htmlInputDataFine.value).getMonth()), new Date(window.htmlInputDataFine.value).getDate());
 
-            console.log(dateTimeInizio + " " + dataInizioHtml + " " + dateTimeFine + " " + dataFineHtml);
-            if (+dateTimeInizio >= +dataInizioHtml && +dateTimeFine <= +dataFineHtml) {
+            if (dateTimeInizio >= dataInizioHtml && dateTimeFine <= dataFineHtml) {
                 datiNoleggio.push(itemStorico.codice);   //Pushiamo i dati ottenuti nel nostro array
             }
         } else {
@@ -172,6 +172,6 @@ async function getClustering() {
         alert("Non ci sono storici nelle date selezionate!");
         nascondiClustering = false;
         buttonClustering.innerHTML = 'Avvia Clustering';
-        abilitaPulsanti([buttonViewStorico, buttonReset, buttonViewBikesRealTime, buttonAttivazioni, buttonClustering, buttonSimulazione, buttonAddRastrelliereFromFile, buttonAddGeofenceFromFile]);
+        abilitaPulsanti([buttonViewStorico, buttonDistanzaMaxRastrelliera, buttonReset, buttonViewBikesRealTime, buttonAttivazioni, buttonClustering, buttonSimulazione, buttonAddRastrelliereFromFile, buttonAddGeofenceFromFile]);
     }
 }

@@ -169,7 +169,7 @@ var sidebar = L.control.sidebar('sidebar', {
 var buttonViewStorico = L.DomUtil.create('button', 'Storico btn btn-light btn-block');
 rimuoviDragBottone(buttonViewStorico);
 //Bottone per vedere lo storico dei tragitti
-var btnViewStorico = L.Control.extend({
+    var btnViewStorico = L.Control.extend({
     onAdd: function () {
         let nascondiStorico = false;
         buttonViewStorico.innerHTML = 'Visualizza storico tragitti';
@@ -343,7 +343,7 @@ function getColorMarkerRange(colore) {
 }
 
 /**** SIMULAZIONE *****/
-var buttonSimulazione = L.DomUtil.create('button', 'Simulazione btn btn-light btn-block');
+var buttonSimulazione = L.DomUtil.create('button', 'Simulazione btn btn-light btn-block ');
 rimuoviDragBottone(buttonSimulazione);
 let nascondiSimulazione = false;
 var maxUtenti = 10;

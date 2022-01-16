@@ -194,7 +194,7 @@ async function prenotaUtente(user) {
     let ids = await getRastrellieraEBici();     //Prendiamo randomicamente una rastrelliera ed una bici presso di essa
 
     let prenotazione = {                        //Creiamo una prenotazione ed assegnamola all'utente
-        di: getCurrentTime(),
+        di: getCurrentTime(),                   //Data Inizio
         utente: user.username,
         bici: ids.idBici,
         cod: randomString(10, '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'),

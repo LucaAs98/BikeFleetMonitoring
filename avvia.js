@@ -1,5 +1,5 @@
 /* In questo script gestiremo tutte le chiamate post e get dell'applicazione (sia WEB che Android).
-*  Con le chiamate "get" mettiamo sulla schermata tutti i dati in formato JSON. Esempio: ci servono le rastrelliere in un altro
+* Con le chiamate "get" mettiamo sulla schermata tutti i dati in formato JSON. Esempio: ci servono le rastrelliere in un altro
 * script. Cosa facciamo? La fetch dell'url corrispondente a dove abbiamo la get.
 * Con le chiamate POST, invece, passiamo i dati da un altro script al database. Vogliamo aggiungere rastrelliere? Facciamo una chiamata POST
 * all'URL che ci permette di aggiungerle, ad esempio "/rastrelliere". Successivamente ad ogni richiesta POST si fa una redirect all'URL della home. */
@@ -14,6 +14,7 @@ const express = require("express");
 var bodyParser = require('body-parser');
 const fileUpload = require('express-fileupload');
 const open = require('open');
+const cluster = require("cluster");
 
 const client = new Client({
     user: 'postgres',
@@ -292,7 +293,6 @@ app.post("/rastrelliere_file", (req, res) => {
 
     query_insert = "";
     for (let ras of rastrelliere.features) {
-
         var name = ras.properties.Nome;
         var long = ras.geometry.coordinates[0];
         var lat = ras.geometry.coordinates[1];
@@ -479,7 +479,6 @@ app.post("/clustering", async (req, res) => {
     var dataset = req.body;
     var k_clusters = parseInt(dataset.numClusters);
     dataset = dataset.lat.map((e, i) => [parseFloat(e), parseFloat(dataset.long[i])]);
-
 
     var clustering = require('density-clustering');
     var kmeans = new clustering.KMEANS();
