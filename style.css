@@ -140,3 +140,11 @@ body > #sidebar {
 .form-label {
     font-size: 12px;
 }
+
+.btn-light {
+    font-size: 12px;
+}
+
+#sliderMaxDistance {
+    font-size: 10px;
+}
