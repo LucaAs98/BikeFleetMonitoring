@@ -1,4 +1,4 @@
-# Bike Fleet Monitoring 🚲
+# Bike Fleet Monitoring 🚲 (Interfaccia web per la visualizzazione dei dati da parte degli amministratori del servizio)
 
 ### Descrizione del Progetto
 Bike Fleet Monitoring è una piattaforma software context-aware per la gestione di una flotta di biciclette a noleggio, sviluppata per il servizio di mobilità urbana della città di Bologna. La piattaforma consente agli utenti di prenotare biciclette, monitorarne la posizione in tempo reale e fornisce funzionalità avanzate di analisi e gestione tramite geofencing. È composta da:
